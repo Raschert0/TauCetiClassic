@@ -1,0 +1,130 @@
+#define RUST_GYROTRON_RANGE 25
+
+/obj/machinery/computer/rust_gyrotron_controller
+	name = "Gyrotron Remote Controller"
+	icon_state = "engine"
+	light_color = "#6496fa"
+
+	var/list/linked_gyrotrons[0] //List of linked gyrotrons.
+
+/obj/machinery/computer/rust_gyrotron_controller/New()
+	..()
+
+/obj/machinery/computer/rust_gyrotron_controller/attack_ai(var/mob/user)
+	. = attack_hand(user)
+
+/obj/machinery/computer/rust_gyrotron_controller/attack_hand(mob/user)
+	. = ..()
+	if(.)
+		if(user.machine == src)
+			user.unset_machine(src)
+		return
+
+	interact(user)
+
+/obj/machinery/computer/rust_gyrotron_controller/interact(mob/user)
+	var/dat = {"
+		Linked gyrotrons:
+		<hr>
+		<table>
+			<tr>
+				<th>ID tag</th>
+				<th>Status</th>
+				<th>Mode</th>
+				<th>Emissions rate (1/10th sec)</th>
+				<th>Beam Output (TJ)</th>
+				<th>Frequency (GHz)</th>
+			</tr>
+	"}
+	for(var/obj/machinery/power/gyrotron/gyro in linked_gyrotrons)
+		//These vars are here because muh readable HTML code.
+		var/gyro_id = linked_gyrotrons.Find(gyro)
+		var/status = ((gyro.state != 2 || gyro.stat & (NOPOWER | BROKEN)) ? "<span style='color: red'>Unresponsive</span>" : "<span style='color: green'>Operational</span>")
+		dat += {"
+			</tr>
+				<td>[gyro.id_tag]</td>
+				<td>[status]</td>
+		"}
+		if(gyro.state != 2 || gyro.stat & (NOPOWER | BROKEN)) //Error data not found.
+			dat += {"
+				<td><span style='color: red'>ERROR</span></td>
+				<td><span style='color: red'>ERROR</span></td>
+				<td><span style='color: red'>ERROR</span></td>
+				<td><span style='color: red'>ERROR</span></td>
+			"}
+		else
+			var/mode = (gyro.emitting ? "<a href='?src=\ref[src];deactivate=1;gyro=[gyro_id]'>Emitting</a>" : "<a href='?src=\ref[src];activate=1;gyro=[gyro_id]'>Stand-By</a>")//See how long this is?
+			dat += {"
+				<td>[mode]</td>
+				<td><a href='?src=\ref[src];modifyrate=1;gyro=[gyro_id]'>[gyro.rate]</a></td>
+				<td><a href='?src=\ref[src];modifypower=1;gyro=[gyro_id]'>[gyro.mega_energy]</a></td>
+				<td><a href='?src=\ref[src];modifyfreq=1;gyro=[gyro_id]'>[gyro.frequency]</a></td>
+			"}
+		dat += "</tr>"
+	dat += "</table>"
+
+	var/datum/browser/popup = new(user, "gyrotron_controller", "Gyrotron Remote Control Console", 500, 400, src)
+	popup.set_content(dat)
+	popup.open()
+	user.set_machine(src)
+
+/obj/machinery/computer/rust_gyrotron_controller/Topic(href, href_list)
+	. = ..()
+	if(.)
+		return
+
+	if(!href_list["gyro"])
+		return
+
+	var/idx = Clamp(text2num(href_list["gyro"]), 1, linked_gyrotrons.len)
+	var/obj/machinery/power/gyrotron/gyro = linked_gyrotrons[idx]
+
+	if(!gyro || gyro.stat & (NOPOWER | BROKEN))
+		return
+
+	if(href_list["modifypower"])
+		var/new_val = input(usr, "Enter new emission power level (0.001 - 0.01)", "Modifying power level (TJ)", gyro.mega_energy) as num
+
+		gyro.mega_energy = Clamp(new_val, 0.001, 0.01)
+		gyro.active_power_usage = gyro.mega_energy * 100000000 //1 MW for 0.01 TJ, 100 KW for 0.001 TJ.
+
+		updateUsrDialog()
+		return 1
+
+	if(href_list["modifyrate"])
+		var/new_val = input(usr, "Enter new emission rate (1 - 10)", "Modifying emission rate (1/10th sec)", gyro.rate) as num
+
+		gyro.rate = Clamp(new_val, 10, 100)
+
+		updateUsrDialog()
+		return 1
+
+	if(href_list["modifyfreq"])
+		var/new_val = input(usr, "Enter new emission frequency (1 - 50000)", "Modifying emission frequency (GHz)", gyro.frequency) as num
+
+		gyro.frequency = Clamp(new_val, 1, 50000)
+
+		updateUsrDialog()
+		return 1
+
+	if(href_list["activate"])
+		gyro.start_emitting()
+
+		updateUsrDialog()
+		return 1
+
+	if(href_list["deactivate"])
+		gyro.stop_emitting()
+
+		updateUsrDialog()
+		return 1
+
+/obj/machinery/computer/rust_gyrotron_controller/attackby(obj/item/W, mob/user)
+	if(istype(W, /obj/item/device/multitool))
+		var/obj/item/device/multitool/M = W
+		if(M.buffer && istype(M.buffer, /obj/machinery/power/gyrotron) && (get_dist(src, M.buffer) < RUST_GYROTRON_RANGE))
+			linked_gyrotrons += M.buffer
+			M.buffer = null
+			user << "<span class='notice'>You upload the data from the [W.name]'s buffer.</span>"
+	else
+		..()

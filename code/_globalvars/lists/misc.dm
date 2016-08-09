@@ -34,3 +34,5 @@ var/list/roles_ingame_minute_unlock = list(
 	ROLE_SHADOWLING = 1200,
 	ROLE_ABDUCTOR = 1200
 )
+
+var/list/fusion_reactions
