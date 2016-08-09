@@ -122,7 +122,7 @@
 /obj/machinery/computer/rust_gyrotron_controller/attackby(obj/item/W, mob/user)
 	if(istype(W, /obj/item/device/multitool))
 		var/obj/item/device/multitool/M = W
-		if(M.buffer && istype(M.buffer, /obj/machinery/power/gyrotron) && (get_dist(src, M.buffer) < RUST_GYROTRON_RANGE))
+		if(M.buffer && istype(M.buffer, /obj/machinery/power/gyrotron) && (get_dist(M.buffer, src) < RUST_GYROTRON_RANGE))
 			linked_gyrotrons += M.buffer
 			M.buffer = null
 			user << "<span class='notice'>You upload the data from the [W.name]'s buffer.</span>"

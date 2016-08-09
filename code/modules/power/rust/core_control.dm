@@ -140,7 +140,7 @@
 	if(href_list["str"])
 		var/val = text2num(href_list["str"])
 		if(!val) //Value is 0, which is manual entering.
-			cur_viewed_device.set_strength(input("Enter the new field power density (W.m^-3)", "R-UST Mk. 7 Tokamak Controls", cur_viewed_device.field_strength) as num)
+			cur_viewed_device.set_strength(input(usr, "Enter the new field power density (W.m^-3)", "R-UST Mk. 7 Tokamak Controls", cur_viewed_device.field_strength) as num)
 		else
 			cur_viewed_device.set_strength(cur_viewed_device.field_strength + val)
 		updateUsrDialog()
@@ -149,7 +149,7 @@
 	if(href_list["freq"])
 		var/val = text2num(href_list["freq"])
 		if(!val) //Value is 0, which is manual entering.
-			cur_viewed_device.set_frequency(input("Enter the new field frequency (MHz)", "R-UST Mk. 7 Tokamak Controls", cur_viewed_device.field_frequency) as num)
+			cur_viewed_device.set_frequency(input(usr, "Enter the new field frequency (MHz)", "R-UST Mk. 7 Tokamak Controls", cur_viewed_device.field_frequency) as num)
 		else
 			cur_viewed_device.set_frequency(cur_viewed_device.field_frequency + val)
 		updateUsrDialog()
@@ -172,33 +172,13 @@
 
 	. = 1
 
-//Multitool menu shit starts here.
-//It's all . because . is faster than return, thanks BYOND.
-/obj/machinery/computer/rust_core_control/multitool_menu(var/mob/user, var/obj/item/device/multitool/P)
-	. = "Linked R-UST Tokamak cores:<br><lu>"
 
-	for(var/obj/machinery/power/rust_core/C in connected_devices)
-		. += "<li><b>[C.id_tag]</b> <a href='?src=\ref[src];unlink=[connected_devices.Find(C)]'>\[X\]</a></li>"
-	. += "</ul>"
-
-/obj/machinery/computer/rust_core_control/linkMenu(var/obj/machinery/power/rust_core/O)
-	if(istype(O))
-		. = "<a href='?src=\ref[src];link=1'>\[LINK\]</a> "
-
-/obj/machinery/computer/rust_core_control/canLink(var/obj/machinery/power/rust_core/O, var/list/context)
-	. = (istype(O) && get_dist(src, O) < scan_range)
-
-/obj/machinery/computer/rust_core_control/isLinkedWith(var/obj/O)
-	. = (O in connected_devices)
-
-/obj/machinery/computer/rust_core_control/linkWith(var/mob/user, var/obj/machinery/power/rust_core/O, var/list/context)
-	connected_devices += O
-	. = 1
-
-/obj/machinery/computer/rust_core_control/getLink(var/idx)
-	if(idx <= connected_devices.len)
-		. = connected_devices[idx]
-
-/obj/machinery/computer/rust_core_control/unlinkFrom(var/mob/user, var/obj/buffer)
-	connected_devices -= buffer
-	. = 1
+/obj/machinery/computer/rust_core_control/attackby(obj/item/W, mob/user)
+	if(istype(W, /obj/item/device/multitool))
+		var/obj/item/device/multitool/M = W
+		if(M.buffer && istype(M.buffer, /obj/machinery/power/rust_core) && (get_dist(M.buffer, src) < scan_range))
+			connected_devices += M.buffer
+			M.buffer = null
+			user << "<span class='notice'>You upload the data from the [W.name]'s buffer.</span>"
+	else
+		..()
