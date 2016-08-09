@@ -52,21 +52,20 @@ max volume of plasma storeable by the field = the total volume of a number of ti
 	icon = 'code/modules/power/rust/rust.dmi'
 	icon_state = "core0"
 	density = 1
-	light_power_on = 2
-	light_range_on = 3
+	var/light_power_on = 2
+	var/light_range_on = 3
 	light_color = "#6496fa"
 
-	var/obj/effect/rust_em_field/owned_field
+	var/obj/effect/effect/rust_em_field/owned_field
 	var/field_strength = 1//0.01
 	var/field_frequency = 1
 	var/id_tag
+	var/state = 0
 
 	use_power = 1
 	idle_power_usage = 50
 	active_power_usage = 500	//multiplied by field strength
 	anchored = 0
-
-	machine_flags = WRENCHMOVE | FIXED2WORK | WELD_FIXED | EMAGGABLE | MULTITOOL_MENU
 
 /obj/machinery/power/rust_core/New()
 	. = ..()
@@ -82,19 +81,109 @@ max volume of plasma storeable by the field = the total volume of a number of ti
 	if(stat & BROKEN || !powernet)
 		Shutdown()
 
-/obj/machinery/power/rust_core/weldToFloor(var/obj/item/weapon/weldingtool/WT, mob/user)
-	if(owned_field)
-		to_chat(user, user << "<span class='warning'>Turn \the [src] off first!</span>")
-		return -1
-
-	if(..() == 1)
+/obj/machinery/power/rust_core/attackby(obj/item/W, mob/user)
+	if(istype(W, /obj/item/weapon/wrench))
+		if(owned_field)
+			user << "Turn off the [src] first."
+			return
 		switch(state)
+			if(0)
+				state = 1
+				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+				user.visible_message("[user.name] secures [src.name] to the floor.", \
+					"You secure the external reinforcing bolts to the floor.", \
+					"You hear a ratchet")
+				src.anchored = 1
 			if(1)
-				disconnect_from_network()
+				state = 0
+				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+				user.visible_message("[user.name] unsecures [src.name] reinforcing bolts from the floor.", \
+					"You undo the external reinforcing bolts.", \
+					"You hear a ratchet")
+				src.anchored = 0
 			if(2)
-				connect_to_network()
-		return 1
-	return -1
+				user << "\red The [src.name] needs to be unwelded from the floor."
+		return
+
+	if(istype(W, /obj/item/weapon/weldingtool))
+		var/obj/item/weapon/weldingtool/WT = W
+		if(owned_field)
+			user << "Turn off the [src] first."
+			return
+		switch(state)
+			if(0)
+				user << "\red The [src.name] needs to be wrenched to the floor."
+			if(1)
+				if (WT.remove_fuel(0,user))
+					playsound(src.loc, 'sound/items/Welder2.ogg', 50, 1)
+					user.visible_message("[user.name] starts to weld the [src.name] to the floor.", \
+						"You start to weld the [src] to the floor.", \
+						"You hear welding")
+					if (do_after(user,20,target = src))
+						if(!src || !WT.isOn()) return
+						state = 2
+						user << "You weld the [src] to the floor."
+						connect_to_network()
+						src.directwired = 1
+				else
+					user << "\red You need more welding fuel to complete this task."
+			if(2)
+				if (WT.remove_fuel(0,user))
+					playsound(src.loc, 'sound/items/Welder2.ogg', 50, 1)
+					user.visible_message("[user.name] starts to cut the [src.name] free from the floor.", \
+						"You start to cut the [src] free from the floor.", \
+						"You hear welding")
+					if (do_after(user,20,target = src))
+						if(!src || !WT.isOn()) return
+						state = 1
+						user << "You cut the [src] free from the floor."
+						disconnect_from_network()
+						src.directwired = 0
+				else
+					user << "\red You need more welding fuel to complete this task."
+		return
+
+	if(istype(W, /obj/item/device/multitool))
+		var/obj/item/device/multitool/M = W
+		M.buffer = src
+		user << "<span class='notice'>You save the data in the [M.name]'s buffer.</span>"
+		return
+/*
+	if(istype(W, /obj/item/weapon/card/id) || istype(W, /obj/item/device/pda))
+		if(emagged)
+			user << "\red The lock seems to be broken"
+			return
+		if(src.allowed(user))
+			if(active)
+				src.locked = !src.locked
+				user << "The controls are now [src.locked ? "locked." : "unlocked."]"
+			else
+				src.locked = 0 //just in case it somehow gets locked
+				user << "\red The controls can only be locked when the [src] is online"
+		else
+			user << "\red Access denied."
+		return
+
+
+	if(istype(W, /obj/item/weapon/card/emag) && !emagged)
+		locked = 0
+		emagged = 1
+		user.visible_message("[user.name] emags the [src.name].","\red You short out the lock.")
+		return
+
+	if(default_deconstruction_screwdriver(user, "emitter_open", "emitter", W))
+		return
+
+	if(exchange_parts(user, W))
+		return
+
+	if(default_pry_open(W))
+		return
+
+	default_deconstruction_crowbar(W)
+*/
+	..()
+	return
 
 /obj/machinery/power/rust_core/Topic(href, href_list)
 	if(..()) return 1
@@ -118,7 +207,7 @@ max volume of plasma storeable by the field = the total volume of a number of ti
 	owned_field = new(loc, src)
 	owned_field.ChangeFieldStrength(field_strength)
 	owned_field.ChangeFieldFrequency(field_frequency)
-	set_light(light_range_on, light_power_on)
+	set_light(light_range_on, light_power_on, light_color)
 	icon_state = "core1"
 	use_power = 2
 	. = 1
@@ -139,13 +228,6 @@ max volume of plasma storeable by the field = the total volume of a number of ti
 /obj/machinery/power/rust_core/bullet_act(var/obj/item/projectile/Proj)
 	if(owned_field)
 		. = owned_field.bullet_act(Proj)
-
-/obj/machinery/power/rust_core/multitool_menu(var/mob/user, var/obj/item/device/multitool/P)
-	return {"
-		<ul>
-			<li>[format_tag("ID Tag","id_tag")]</li>
-		</ul>
-	"}
 
 /obj/machinery/power/rust_core/proc/set_strength(var/value)
 	value = Clamp(value, MIN_FIELD_STR, MAX_FIELD_STR)

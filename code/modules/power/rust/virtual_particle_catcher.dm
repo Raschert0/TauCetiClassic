@@ -6,7 +6,7 @@
 	density = 0
 	anchored = 1
 	layer = 2.9
-	var/obj/effect/rust_em_field/parent
+	var/obj/effect/effect/rust_em_field/parent
 	var/mysize = 0
 
 	invisibility = 101
@@ -44,5 +44,5 @@
 
 /obj/effect/effect/rust_particle_catcher/Bumped(atom/AM)
 	if(ismob(AM) && density && prob(10))
-		AM << "<span class='warning'>A powerful force pushes you back.</span>")
+		AM << "<span class='warning'>A powerful force pushes you back.</span>"
 	..()
