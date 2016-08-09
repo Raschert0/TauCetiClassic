@@ -22,8 +22,6 @@
 	var/cached_power_avail = 0
 	var/emergency_insert_ready = 0
 
-	machine_flags = WRENCHMOVE | FIXED2WORK | WELD_FIXED | EMAGGABLE
-
 /obj/machinery/power/rust_fuel_injector/process()
 	if(injecting)
 		if(stat & (BROKEN|NOPOWER))

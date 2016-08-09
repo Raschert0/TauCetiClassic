@@ -13,6 +13,7 @@ proc/get_fusion_reaction(var/primary_reactant, var/secondary_reactant)
 		var/list/secondary_reactions = fusion_reactions[primary_reactant]
 		if(secondary_reactions.Find(secondary_reactant))
 			return fusion_reactions[primary_reactant][secondary_reactant]
+	return 0
 
 proc/populate_fusion_reactions()
 	fusion_reactions = list()
@@ -21,9 +22,6 @@ proc/populate_fusion_reactions()
 		if(!fusion_reactions[cur_reaction.primary_reactant])
 			fusion_reactions[cur_reaction.primary_reactant] = list()
 		fusion_reactions[cur_reaction.primary_reactant][cur_reaction.secondary_reactant] = cur_reaction
-		if(!fusion_reactions[cur_reaction.secondary_reactant])
-			fusion_reactions[cur_reaction.secondary_reactant] = list()
-		fusion_reactions[cur_reaction.secondary_reactant][cur_reaction.primary_reactant] = cur_reaction
 
 //Fake elements and fake reactions, but its nicer gameplay-wise
 //Deuterium

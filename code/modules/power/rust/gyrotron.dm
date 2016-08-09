@@ -25,8 +25,18 @@
 	if(!id_tag)
 		assign_uid()
 		id_tag = num2text(uid)
-	SSobj.processing |= src
 
+/obj/machinery/power/gyrotron/Destroy()
+	message_admins("Gyrotron deleted at ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
+	log_game("Gyrotron deleted at ([x],[y],[z])")
+	investigate_log("<font color='red'>deleted</font> at ([x],[y],[z])","singulo")
+	..()
+
+/obj/machinery/power/gyrotron/initialize()
+	..()
+	if(state == 2 && anchored)
+		connect_to_network()
+		src.directwired = 1
 
 /obj/machinery/power/gyrotron/proc/stop_emitting()
 	emitting = 0

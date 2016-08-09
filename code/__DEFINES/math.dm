@@ -1,4 +1,5 @@
 #define PI 					3.1415
+#define PI_SQ				9.8696
 #define SPEED_OF_LIGHT		3e8 //not exact but hey!
 #define SPEED_OF_LIGHT_SQ	9e+16
 #define INFINITY 			1.#INF
