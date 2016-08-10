@@ -11,6 +11,7 @@ var/const/max_assembly_amount = 300
 	var/opened = 1 //0=closed, 1=opened
 	var/locked = 0
 	var/has_electronics = 0 // 0 - none, bit 1 - circuitboard, bit 2 - wires
+	var/tdir = null
 
 /obj/machinery/rust_fuel_compressor/attack_ai(mob/user)
 	attack_hand(user)

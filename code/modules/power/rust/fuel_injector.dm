@@ -33,15 +33,13 @@
 	cached_power_avail = avail()
 
 /obj/machinery/power/rust_fuel_injector/attackby(obj/item/W, mob/user)
-	if(..())
-		return 1
-
 	if(istype(W, /obj/item/weapon/fuel_assembly) && !cur_assembly)
 		if(emergency_insert_ready)
-			if(user.drop_item(W, src))
-				cur_assembly = W
-				emergency_insert_ready = 0
-				return
+			user.drop_item(W)
+			cur_assembly = W
+			W.loc = src
+			emergency_insert_ready = 0
+			return
 	if(istype(W, /obj/item/weapon/wrench))
 		if(injecting)
 			user << "Turn off the [src] first."

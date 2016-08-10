@@ -94,9 +94,6 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 	if(!owned_core)
 		qdel(src)
 
-	//handle radiation
-	if(radiation)
-		pulse()
 
 	//update values
 	var/transfer_ratio = field_strength * 0.02			//higher field strength will result in faster plasma aggregation
@@ -133,6 +130,10 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 	//let the particles inside the field react
 	React()
 
+	//handle radiation
+	if(radiation)
+		pulse()
+
 	//change held plasma temp according to energy levels
 	//SPECIFIC_HEAT_TOXIN
 	if(mega_energy)
@@ -162,7 +163,7 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 		var/amount = dormant_reactant_quantities[reactant]
 		if(amount < 1)
 			dormant_reactant_quantities.Remove(reactant)
-		else if(amount >= 1000000)
+		else if(amount >= 1e6)
 			var/radiate = rand(amount * 0.25, amount * 0.75)
 			dormant_reactant_quantities[reactant] -= radiate
 			radiation += radiate
@@ -175,8 +176,9 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 			R.receive_pulse(radiation * SINGULO_COEF) //this is not singulo - we need increase output
 
 	//and humans... uhm... Maybe, can be slow
-	for(var/mob/living/l in range(8, src)) //USE ANOTHER FORMULA (or not...)
-		l.apply_effect(radiation, IRRADIATE)
+	for(var/mob/living/L in range(5, src)) //USE ANOTHER FORMULA (or not...)
+		L.apply_effect(radiation, IRRADIATE, FALSE)
+		L.updatehealth()
 
 	return
 
@@ -274,7 +276,6 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 /obj/effect/effect/rust_em_field/proc/React()
 	//loop through the reactions
 	if(!fusion_reactions || !fusion_reactions.len)
-		world << "But now reactions not found"
 		return
 	var/datum/fusion_reaction/cur_reaction
 	if(dormant_reactant_quantities.len)
@@ -283,29 +284,28 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 				cur_reaction = fusion_reactions[p_reactant][s_reactant]
 				if(!dormant_reactant_quantities.Find(p_reactant) || !dormant_reactant_quantities.Find(s_reactant))
 					continue
-					var/react_amount  = 0
-					if(p_reactant != s_reactant)
-						react_amount = min(dormant_reactant_quantities[p_reactant], dormant_reactant_quantities[s_reactant], 1)
-					else
-						react_amount = min(dormant_reactant_quantities[p_reactant] * 0.5, 1)
-					if(!react_amount || ((cur_reaction.energy_consumption * react_amount) > mega_energy))
-						continue
-					world << "Current reaction: [p_reactant]-[s_reactant]"
-					mega_energy += (cur_reaction.energy_production - cur_reaction.energy_consumption) * react_amount
-					radiation += cur_reaction.radiation * react_amount
-					dormant_reactant_quantities[p_reactant] -= react_amount
-					if(dormant_reactant_quantities[p_reactant] < MINIMUM_REACTANT_AMOUNT)
-						dormant_reactant_quantities -= p_reactant
-					dormant_reactant_quantities[s_reactant] -= react_amount
-					if(dormant_reactant_quantities[s_reactant] < MINIMUM_REACTANT_AMOUNT)
-						dormant_reactant_quantities -= s_reactant
-					if(cur_reaction.products && cur_reaction.products.len)
-						for(var/o_reactant in cur_reaction.products)
-							if(!dormant_reactant_quantities.Find(o_reactant))
-								dormant_reactant_quantities += o_reactant
-								dormant_reactant_quantities[o_reactant] = react_amount * cur_reaction.products[o_reactant]
-							else
-								dormant_reactant_quantities[o_reactant] += react_amount * cur_reaction.products[o_reactant]
+				var/react_amount  = 0
+				if(p_reactant != s_reactant)
+					react_amount = min(dormant_reactant_quantities[p_reactant], dormant_reactant_quantities[s_reactant], 1)
+				else
+					react_amount = min(dormant_reactant_quantities[p_reactant] * 0.5, 1)
+				if(!react_amount || ((cur_reaction.energy_consumption * react_amount) > mega_energy))
+					continue
+				mega_energy += (cur_reaction.energy_production - cur_reaction.energy_consumption) * react_amount
+				radiation += cur_reaction.radiation * react_amount
+				dormant_reactant_quantities[p_reactant] -= react_amount
+				if(dormant_reactant_quantities[p_reactant] < MINIMUM_REACTANT_AMOUNT)
+					dormant_reactant_quantities -= p_reactant
+				dormant_reactant_quantities[s_reactant] -= react_amount
+				if(dormant_reactant_quantities[s_reactant] < MINIMUM_REACTANT_AMOUNT)
+					dormant_reactant_quantities -= s_reactant
+				if(cur_reaction.products && cur_reaction.products.len)
+					for(var/o_reactant in cur_reaction.products)
+						if(!dormant_reactant_quantities.Find(o_reactant))
+							dormant_reactant_quantities += o_reactant
+							dormant_reactant_quantities[o_reactant] = react_amount * cur_reaction.products[o_reactant]
+						else
+							dormant_reactant_quantities[o_reactant] += react_amount * cur_reaction.products[o_reactant]
 	return
 
 /obj/effect/effect/rust_em_field/Destroy()

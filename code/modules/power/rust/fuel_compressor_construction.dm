@@ -42,17 +42,21 @@
 
 	// offset 24 pixels in direction of dir
 	// this allows the APC to be embedded in a wall, yet still inside an area
-	if (building)
+	if(building)
 		dir = ndir
-	else
+
+	src.tdir = dir		// to fix Vars bug
+	dir = SOUTH
+
+	pixel_x = (src.tdir & 3)? 0 : (src.tdir == 4 ? 24 : -24)
+	pixel_y = (src.tdir & 3)? (src.tdir ==1 ? 24 : -24) : 0
+
+	if(!building)
 		has_electronics = 3
 		opened = 0
 		locked = 0
 		icon_state = "fuel_compressor1"
 
-	//20% easier to read than apc code
-	pixel_x = (dir & 3)? 0 : (dir == 4 ? WORLD_ICON_SIZE : -WORLD_ICON_SIZE)
-	pixel_y = (dir & 3)? (dir ==1 ? WORLD_ICON_SIZE : -WORLD_ICON_SIZE) : 0
 
 /obj/machinery/rust_fuel_compressor/attackby(obj/item/W, mob/user)
 
