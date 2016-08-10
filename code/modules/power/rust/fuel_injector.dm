@@ -271,13 +271,13 @@
 					numparticles = 1
 
 				var/turf/T = get_step(src,dir)
-				var/obj/effect/accelerated_particle/A = new/obj/effect/accelerated_particle(T, dir)
+				var/obj/effect/accelerated_particle/A = new/obj/effect/accelerated_particle(T)
 				if(A)
 					A.dir = src.dir
 					A.particle_type = reagent
 					A.additional_particles = numparticles - 1
-				cur_assembly.rod_quantities[reagent] -= amount
-				amount_left += cur_assembly.rod_quantities[reagent]
+					cur_assembly.rod_quantities[reagent] -= amount
+					amount_left += cur_assembly.rod_quantities[reagent]
 		cur_assembly.percent_depleted = amount_left / 300
 		flick("injector-emitting",src)
 	else

@@ -12,6 +12,7 @@ var/datum/subsystem/machines/SSmachine
 
 /datum/subsystem/machines/Initialize()
 	makepowernets()
+	populate_fusion_reactions()
 	fire()
 	..()
 

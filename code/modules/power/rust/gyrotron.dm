@@ -41,7 +41,6 @@
 /obj/machinery/power/gyrotron/proc/stop_emitting()
 	emitting = 0
 	use_power = 1
-	deltimer(emit_timer_id)
 	update_icon()
 
 /obj/machinery/power/gyrotron/proc/start_emitting()
@@ -51,11 +50,14 @@
 	emitting = 1
 	use_power = 2
 	emit()
-	emit_timer_id = addtimer(src, "emit", rate, TRUE)
+	emit_timer_id = addtimer(src, "emit", rate, FALSE)
 
 	update_icon()
 
 /obj/machinery/power/gyrotron/proc/emit()
+	if(!emitting)
+		emit_timer_id = 0
+		return
 	var/obj/item/projectile/beam/emitter/A = PoolOrNew(/obj/item/projectile/beam/emitter, loc)
 	A.frequency = frequency
 	A.damage = mega_energy * 1500
@@ -75,7 +77,7 @@
 		else // Any other
 			A.original = locate(x, y-1, z)
 	A.process()
-
+	emit_timer_id = addtimer(src, "emit", rate, FALSE)
 	flick("emitter-active", src)
 
 /obj/machinery/power/gyrotron/power_change()

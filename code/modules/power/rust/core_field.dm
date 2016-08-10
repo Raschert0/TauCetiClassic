@@ -47,6 +47,11 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 	//create the gimmicky things to handle field collisions
 	var/obj/effect/effect/rust_particle_catcher/catcher
 
+	if(fusion_reactions && fusion_reactions.len)
+		world << "Reactions found"
+	else
+		world << "Can't find reactions"
+
 	catcher = new (locate(src.x-3,src.y-3,src.z))
 	catcher.parent = src
 	catcher.SetSize(7)
@@ -121,9 +126,9 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 		gas_covered.phoron -= plasma_captured.phoron
 		gas_covered.update_values()
 		//
-		held_plasma.check_then_merge(plasma_captured)
+		held_plasma.merge(plasma_captured)
 		//
-		environment.check_then_merge(gas_covered)
+		environment.merge(gas_covered)
 
 	//let the particles inside the field react
 	React()
@@ -268,38 +273,39 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 //the !!fun!! part
 /obj/effect/effect/rust_em_field/proc/React()
 	//loop through the reactions
-	if(!fusion_reactions.len)
+	if(!fusion_reactions || !fusion_reactions.len)
+		world << "But now reactions not found"
 		return
+	var/datum/fusion_reaction/cur_reaction
 	if(dormant_reactant_quantities.len)
-		var/p_reactant
-		var/s_reactant
-		for(var/datum/fusion_reaction/cur_reaction in fusion_reactions)
-			p_reactant = cur_reaction.primary_reactant
-			s_reactant = cur_reaction.secondary_reactant
-			if(!dormant_reactant_quantities.Find(p_reactant) || !dormant_reactant_quantities.Find(s_reactant))
-				continue
-			var/react_amount  = 0
-			if(p_reactant != s_reactant)
-				react_amount = min(dormant_reactant_quantities[p_reactant], dormant_reactant_quantities[s_reactant], 1)
-			else
-				react_amount = min(dormant_reactant_quantities[p_reactant] * 0.5, 1)
-			if(!react_amount || ((cur_reaction.energy_consumption * react_amount) > mega_energy))
-				continue
-			mega_energy += (cur_reaction.energy_production - cur_reaction.energy_consumption) * react_amount
-			radiation += cur_reaction.radiation * react_amount
-			dormant_reactant_quantities[p_reactant] -= react_amount
-			if(dormant_reactant_quantities[p_reactant] < MINIMUM_REACTANT_AMOUNT)
-				dormant_reactant_quantities -= p_reactant
-			dormant_reactant_quantities[s_reactant] -= react_amount
-			if(dormant_reactant_quantities[s_reactant] < MINIMUM_REACTANT_AMOUNT)
-				dormant_reactant_quantities -= s_reactant
-			if(cur_reaction.products.len)
-				for(var/o_reactant in cur_reaction.products)
-					if(!dormant_reactant_quantities.Find(o_reactant))
-						dormant_reactant_quantities += o_reactant
-						dormant_reactant_quantities[o_reactant] = react_amount * cur_reaction.products[o_reactant]
+		for(var/p_reactant in fusion_reactions)
+			for(var/s_reactant in fusion_reactions[p_reactant])
+				cur_reaction = fusion_reactions[p_reactant][s_reactant]
+				if(!dormant_reactant_quantities.Find(p_reactant) || !dormant_reactant_quantities.Find(s_reactant))
+					continue
+					var/react_amount  = 0
+					if(p_reactant != s_reactant)
+						react_amount = min(dormant_reactant_quantities[p_reactant], dormant_reactant_quantities[s_reactant], 1)
 					else
-						dormant_reactant_quantities[o_reactant] += react_amount * cur_reaction.products[o_reactant]
+						react_amount = min(dormant_reactant_quantities[p_reactant] * 0.5, 1)
+					if(!react_amount || ((cur_reaction.energy_consumption * react_amount) > mega_energy))
+						continue
+					world << "Current reaction: [p_reactant]-[s_reactant]"
+					mega_energy += (cur_reaction.energy_production - cur_reaction.energy_consumption) * react_amount
+					radiation += cur_reaction.radiation * react_amount
+					dormant_reactant_quantities[p_reactant] -= react_amount
+					if(dormant_reactant_quantities[p_reactant] < MINIMUM_REACTANT_AMOUNT)
+						dormant_reactant_quantities -= p_reactant
+					dormant_reactant_quantities[s_reactant] -= react_amount
+					if(dormant_reactant_quantities[s_reactant] < MINIMUM_REACTANT_AMOUNT)
+						dormant_reactant_quantities -= s_reactant
+					if(cur_reaction.products && cur_reaction.products.len)
+						for(var/o_reactant in cur_reaction.products)
+							if(!dormant_reactant_quantities.Find(o_reactant))
+								dormant_reactant_quantities += o_reactant
+								dormant_reactant_quantities[o_reactant] = react_amount * cur_reaction.products[o_reactant]
+							else
+								dormant_reactant_quantities[o_reactant] += react_amount * cur_reaction.products[o_reactant]
 	return
 
 /obj/effect/effect/rust_em_field/Destroy()
