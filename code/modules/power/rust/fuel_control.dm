@@ -125,7 +125,7 @@
 		connected_injectors = list()
 		for(var/obj/machinery/power/rust_fuel_injector/I in range(scan_range, src))
 			if(check_injector_status(I))
-				connected_injectors.Add(I)
+				connected_injectors += I
 
 	if( href_list["toggle_stage"] )
 		var/cur_stage = href_list["toggle_stage"]

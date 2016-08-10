@@ -234,12 +234,11 @@
 		new_usage = Clamp(0.01, new_usage, 100)
 		fuel_usage = new_usage / 100
 		active_power_usage = 500 + 1000 * fuel_usage
-	/*
+
 	if( href_list["update_extern"] )
 		var/obj/machinery/computer/rust_fuel_control/C = locate(href_list["update_extern"])
 		if(C)
 			C.updateDialog()
-	*/
 
 	if( href_list["close"] )
 		usr << browse(null, "window=fuel_injector")

@@ -1320,6 +1320,7 @@
 #include "code\modules\power\rust\fuel_assembly.dm"
 #include "code\modules\power\rust\fuel_assembly_port.dm"
 #include "code\modules\power\rust\fuel_assembly_port_construction.dm"
+#include "code\modules\power\rust\fuel_control.dm"
 #include "code\modules\power\rust\fuel_injector.dm"
 #include "code\modules\power\rust\fusion_reactions.dm"
 #include "code\modules\power\rust\gyrotron.dm"
