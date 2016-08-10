@@ -43,6 +43,16 @@
 			toxmob(A)
 		if((istype(A,/obj/machinery/the_singularitygen))||(istype(A,/obj/singularity/)))
 			A:energy += energy
+		else if( istype(A,/obj/effect/effect/rust_particle_catcher) )
+			var/obj/effect/effect/rust_particle_catcher/CC = A
+			if(particle_type && particle_type != "neutron")
+				if(CC.AddParticles(particle_type, 1 + additional_particles))
+					CC.parent.AddEnergy(energy,mega_energy)
+		else if( istype(A,/obj/machinery/power/rust_core) )
+			var/obj/machinery/power/rust_core/CG = A
+			if(particle_type && particle_type != "neutron")
+				if(CG.AddParticles(particle_type, 1 + additional_particles))
+					CG.owned_field.AddEnergy(energy,mega_energy)
 	return
 
 

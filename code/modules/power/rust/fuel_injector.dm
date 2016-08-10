@@ -14,6 +14,7 @@
 	var/id_tag = "One"
 	var/injecting = 0
 	var/trying_to_swap_fuel = 0
+	var/state = 0
 
 	use_power = 1
 	idle_power_usage = 10
@@ -31,43 +32,9 @@
 
 	cached_power_avail = avail()
 
-/obj/machinery/power/rust_fuel_injector/wrenchAnchor(mob/user)
-	if(injecting)
-		to_chat(user, "Turn off the [src] first.")
-		return -1
-	return ..()
-
-/obj/machinery/power/rust_fuel_injector/weldToFloor(var/obj/item/weapon/weldingtool/WT, mob/user)
-	if(..() == 1)
-		switch(state)
-			if(1)
-				disconnect_from_network()
-			if(2)
-				connect_to_network()
-		return 1
-	return -1
-
-/obj/machinery/power/rust_fuel_injector/emag(mob/user)
-	if(!emagged)
-		locked = 0
-		emagged = 1
-		user.visible_message("[user.name] emags the [src.name].","<span class='warning'>You short out the lock.</span>")
-		return 1
-	return -1
 /obj/machinery/power/rust_fuel_injector/attackby(obj/item/W, mob/user)
 	if(..())
 		return 1
-
-	if(istype(W, /obj/item/weapon/card/id) || istype(W, /obj/item/device/pda))
-		if(emagged)
-			to_chat(user, "<span class='warning'>The lock seems to be broken</span>")
-			return
-		if(src.allowed(user))
-			src.locked = !src.locked
-			to_chat(user, "The controls are now [src.locked ? "locked." : "unlocked."]")
-		else
-			to_chat(user, "<span class='warning'>Access denied.</span>")
-		return
 
 	if(istype(W, /obj/item/weapon/fuel_assembly) && !cur_assembly)
 		if(emergency_insert_ready)
@@ -75,8 +42,117 @@
 				cur_assembly = W
 				emergency_insert_ready = 0
 				return
+	if(istype(W, /obj/item/weapon/wrench))
+		if(injecting)
+			user << "Turn off the [src] first."
+			return
+		switch(state)
+			if(0)
+				state = 1
+				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+				user.visible_message("[user.name] secures [src.name] to the floor.", \
+					"You secure the external reinforcing bolts to the floor.", \
+					"You hear a ratchet")
+				src.anchored = 1
+			if(1)
+				state = 0
+				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+				user.visible_message("[user.name] unsecures [src.name] reinforcing bolts from the floor.", \
+					"You undo the external reinforcing bolts.", \
+					"You hear a ratchet")
+				src.anchored = 0
+			if(2)
+				user << "\red The [src.name] needs to be unwelded from the floor."
+		return
 
-	..()
+	if(istype(W, /obj/item/weapon/wrench))
+		if(injecting)
+			user << "Turn off the [src] first."
+			return
+		switch(state)
+			if(0)
+				state = 1
+				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+				user.visible_message("[user.name] secures [src.name] to the floor.", \
+					"You secure the external reinforcing bolts to the floor.", \
+					"You hear a ratchet")
+				src.anchored = 1
+			if(1)
+				state = 0
+				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+				user.visible_message("[user.name] unsecures [src.name] reinforcing bolts from the floor.", \
+					"You undo the external reinforcing bolts.", \
+					"You hear a ratchet")
+				src.anchored = 0
+			if(2)
+				user << "\red The [src.name] needs to be unwelded from the floor."
+		return
+
+	if(istype(W, /obj/item/weapon/weldingtool))
+		var/obj/item/weapon/weldingtool/WT = W
+		if(injecting)
+			user << "Turn off the [src] first."
+			return
+		switch(state)
+			if(0)
+				user << "\red The [src.name] needs to be wrenched to the floor."
+			if(1)
+				if (WT.remove_fuel(0,user))
+					playsound(src.loc, 'sound/items/Welder2.ogg', 50, 1)
+					user.visible_message("[user.name] starts to weld the [src.name] to the floor.", \
+						"You start to weld the [src] to the floor.", \
+						"You hear welding")
+					if (do_after(user,20,target = src))
+						if(!src || !WT.isOn()) return
+						state = 2
+						user << "You weld the [src] to the floor."
+						connect_to_network()
+						src.directwired = 1
+				else
+					user << "\red You need more welding fuel to complete this task."
+			if(2)
+				if (WT.remove_fuel(0,user))
+					playsound(src.loc, 'sound/items/Welder2.ogg', 50, 1)
+					user.visible_message("[user.name] starts to cut the [src.name] free from the floor.", \
+						"You start to cut the [src] free from the floor.", \
+						"You hear welding")
+					if (do_after(user,20,target = src))
+						if(!src || !WT.isOn()) return
+						state = 1
+						user << "You cut the [src] free from the floor."
+						disconnect_from_network()
+						src.directwired = 0
+				else
+					user << "\red You need more welding fuel to complete this task."
+		return
+
+	if(istype(W, /obj/item/weapon/card/id) || istype(W, /obj/item/device/pda))
+		if(emagged)
+			user << "\red The lock seems to be broken"
+			return
+		if(src.allowed(user))
+			if(injecting)
+				src.locked = !src.locked
+				user << "The controls are now [src.locked ? "locked." : "unlocked."]"
+			else
+				src.locked = 0 //just in case it somehow gets locked
+				user << "\red The controls can only be locked when the [src] is online"
+		else
+			user << "\red Access denied."
+		return
+
+	if(istype(W, /obj/item/weapon/card/emag) && !emagged)
+		locked = 0
+		emagged = 1
+		user.visible_message("[user.name] emags the [src.name].","\red You short out the lock.")
+		return
+	/*
+	if(istype(W, /obj/item/device/multitool))
+		var/obj/item/device/multitool/M = W
+		M.buffer = src
+		user << "<span class='notice'>You save the data in the [M.name]'s buffer.</span>"
+		return
+	*/
 	return
 
 /obj/machinery/power/rust_fuel_injector/attack_ai(mob/user)
@@ -154,19 +230,16 @@
 		remote_access_enabled = !remote_access_enabled
 
 	if( href_list["fuel_usage"] )
-		var/new_usage = text2num(input("Enter new fuel usage (0.01% - 100%)", "Modifying fuel usage", fuel_usage * 100))
-		if(!new_usage)
-			to_chat(usr, "<span class='warning'>That's not a valid number.</span>")
-			return
-		new_usage = max(new_usage, 0.01)
-		new_usage = min(new_usage, 100)
+		var/new_usage = text2num(input(usr, "Enter new fuel usage (0.01% - 100%)", "Modifying fuel usage", fuel_usage * 100))
+		new_usage = Clamp(0.01, new_usage, 100)
 		fuel_usage = new_usage / 100
 		active_power_usage = 500 + 1000 * fuel_usage
-
+	/*
 	if( href_list["update_extern"] )
 		var/obj/machinery/computer/rust_fuel_control/C = locate(href_list["update_extern"])
 		if(C)
 			C.updateDialog()
+	*/
 
 	if( href_list["close"] )
 		usr << browse(null, "window=fuel_injector")
@@ -192,23 +265,18 @@
 	if(cur_assembly)
 		var/amount_left = 0
 		for(var/reagent in cur_assembly.rod_quantities)
-//			to_chat(world, "checking [reagent]")
 			if(cur_assembly.rod_quantities[reagent] > 0)
-//					to_chat(world, "	rods left: [cur_assembly.rod_quantities[reagent]]")
 				var/amount = cur_assembly.rod_quantities[reagent] * fuel_usage
 				var/numparticles = round(amount * 1000)
 				if(numparticles < 1)
 					numparticles = 1
-//					to_chat(world, "	amount: [amount]")
-//					to_chat(world, "	numparticles: [numparticles]")
-				//
 
-				var/obj/effect/accelerated_particle/A = new/obj/effect/accelerated_particle(get_turf(src), dir)
-				A.particle_type = reagent
-				A.additional_particles = numparticles - 1
-				//A.target = target_field
-				A.startMove(1)
-
+				var/turf/T = get_step(src,dir)
+				var/obj/effect/accelerated_particle/A = new/obj/effect/accelerated_particle(T, dir)
+				if(A)
+					A.dir = src.dir
+					A.particle_type = reagent
+					A.additional_particles = numparticles - 1
 				cur_assembly.rod_quantities[reagent] -= amount
 				amount_left += cur_assembly.rod_quantities[reagent]
 		cur_assembly.percent_depleted = amount_left / 300
@@ -238,27 +306,27 @@
 
 		break
 	if(success)
-		src.visible_message("<span class='notice'>[bicon(src)] a green light flashes on [src].</span>")
+		src.visible_message("<span class='notice'>A green light flashes on [src].</span>")
 		updateDialog()
 	else
-		src.visible_message("<span class='warning'>[bicon(src)] a red light flashes on [src].</span>")
+		src.visible_message("<span class='warning'>A red light flashes on [src].</span>")
 
 /obj/machinery/power/rust_fuel_injector/verb/rotate_clock()
 	set category = "Object"
-	set name = "Rotate Generator (Clockwise)"
+	set name = "Rotate Injector (Clockwise)"
 	set src in view(1)
 
-	if (usr.isUnconscious() || usr.restrained()  || anchored)
+	if (usr.incapacitated() || anchored)
 		return
 
 	src.dir = turn(src.dir, -90)
 
 /obj/machinery/power/rust_fuel_injector/verb/rotate_anticlock()
 	set category = "Object"
-	set name = "Rotate Generator (Counter-clockwise)"
+	set name = "Rotate Injector (Counter-clockwise)"
 	set src in view(1)
 
-	if (usr.isUnconscious() || usr.restrained()  || anchored)
+	if (usr.incapacitated() || anchored)
 		return
 
 	src.dir = turn(src.dir, 90)

@@ -1,5 +1,3 @@
-
-
 /obj/machinery/rust_fuel_assembly_port
 	name = "Fuel Assembly Port"
 	icon = 'code/modules/power/rust/rust.dmi'
@@ -15,12 +13,13 @@
 /obj/machinery/rust_fuel_assembly_port/attackby(var/obj/item/I, var/mob/user)
 	if(istype(I,/obj/item/weapon/fuel_assembly) && !opened)
 		if(cur_assembly)
-			to_chat(user, "<span class='warning'>There is already a fuel rod assembly in there!</span>")
+			user << "<span class='warning'>There is already a fuel rod assembly in there!</span>"
 		else
-			if(user.drop_item(I, src))
-				cur_assembly = I
-				icon_state = "port1"
-				to_chat(user, "<span class='notice'>You insert [I] into [src]. Touch the panel again to insert [I] into the injector.</span>")
+			user.drop_item()
+			I.loc = src
+			cur_assembly = I
+			icon_state = "port1"
+			user << "<span class='notice'>You insert [I] into [src]. Touch the panel again to insert [I] into the injector.</span>"
 
 /obj/machinery/rust_fuel_assembly_port/attack_hand(mob/user)
 	add_fingerprint(user)
@@ -29,16 +28,16 @@
 
 	if(cur_assembly)
 		if(try_insert_assembly())
-			to_chat(user, "<span class='notice'>[bicon(src)] [src] inserts it's fuel rod assembly into an injector.</span>")
+			user << "<span class='notice'>[src] inserts it's fuel rod assembly into an injector.</span>"
 		else
 			if(eject_assembly())
-				to_chat(user, "<span class='warning'>[bicon(src)] [src] ejects it's fuel assembly. Check the fuel injector status.</span>")
+				user << "<span class='warning'>[src] ejects it's fuel assembly. Check the fuel injector status.</span>"
 			else if(try_draw_assembly())
-				to_chat(user, "<span class='notice'>[bicon(src)] [src] draws a fuel rod assembly from an injector.</span>")
+				user << "<span class='notice'>[src] draws a fuel rod assembly from an injector.</span>"
 	else if(try_draw_assembly())
-		to_chat(user, "<span class='notice'>[bicon(src)] [src] draws a fuel rod assembly from an injector.</span>")
+		user << "<span class='notice'>[src] draws a fuel rod assembly from an injector.</span>"
 	else
-		to_chat(user, "<span class='warning'>[bicon(src)] [src] was unable to draw a fuel rod assembly from an injector.</span>")
+		user << "<span class='warning'>[src] was unable to draw a fuel rod assembly from an injector.</span>"
 
 /obj/machinery/rust_fuel_assembly_port/proc/try_insert_assembly()
 	var/success = 0

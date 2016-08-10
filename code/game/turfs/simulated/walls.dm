@@ -453,6 +453,11 @@
 		AH.try_build(src)
 		return
 
+	else if(istype(W,/obj/item/rust_fuel_assembly_port))
+		var/obj/item/rust_fuel_assembly_port/AH = W
+		AH.try_build(src)
+		return
+
 	//Poster stuff
 	else if(istype(W,/obj/item/weapon/poster))
 		place_poster(W,user)

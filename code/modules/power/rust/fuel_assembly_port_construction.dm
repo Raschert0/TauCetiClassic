@@ -1,24 +1,39 @@
-
+#define WORLD_ICON_SIZE 32
 //frame assembly
 
-/obj/item/mounted/frame/rust_fuel_assembly_port
+/obj/item/rust_fuel_assembly_port
 	name = "Fuel Assembly Port frame"
 	icon = 'code/modules/power/rust/rust.dmi'
 	icon_state = "port2"
-	w_class = W_CLASS_LARGE
-	mount_reqs = list("simfloor", "nospace")
-	flags = FPRINT
+	w_class = 4
+	flags = FPRINT | TABLEPASS
 	siemens_coefficient = 1
 
-/obj/item/mounted/frame/rust_fuel_assembly_port/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/item/rust_fuel_assembly_port/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if (iswrench(W))
 		new /obj/item/stack/sheet/plasteel( get_turf(src.loc), 12 )
 		del(src)
 		return
 	..()
 
-/obj/item/mounted/frame/rust_fuel_assembly_port/do_build(turf/on_wall, mob/user)
-	new /obj/machinery/rust_fuel_assembly_port(get_turf(user), get_dir(user, on_wall), 1)
+/obj/item/rust_fuel_assembly_port/proc/try_build(turf/on_wall)
+	if (get_dist(on_wall,usr)>1)
+		return
+	var/ndir = get_dir(usr,on_wall)
+	if (!(ndir in cardinal))
+		return
+	var/turf/loc = get_turf(usr)
+	var/area/A = loc.loc
+	if (!istype(loc, /turf/simulated/floor))
+		usr << "\red Fuel Assembly Port cannot be placed on this spot."
+		return
+	if (A.requires_power == 0 || istype(A, /area/space))
+		usr << "\red Fuel Assembly Port cannot be placed in this area."
+		return
+	for(var/obj/machinery/rust_fuel_assembly_port/T in loc)
+		usr << "\red There is another Fuel Assembly Port here."
+		return
+	new /obj/machinery/rust_fuel_assembly_port(loc, ndir, 1)
 	qdel(src)
 
 //construction steps
@@ -46,9 +61,9 @@
 		if(opened)
 			if(has_electronics & 1)
 				playsound(get_turf(src), 'sound/items/Crowbar.ogg', 50, 1)
-				to_chat(user, "You begin removing the circuitboard")//lpeters - fixed grammar issues
+				user << "<span class='notice'> You begin removing the circuitboard </span>"//lpeters - fixed grammar issues
 
-				if(do_after(user, src, 50))
+				if(do_after(user, 50, target = src))
 					user.visible_message(\
 						"<span class='warning'>[user.name] has removed the circuitboard from [src.name]!</span>",\
 						"<span class='notice'>You remove the circuitboard.</span>")
@@ -58,24 +73,24 @@
 			else
 				opened = 0
 				icon_state = "port0"
-				to_chat(user, "<span class='notice'>You close the maintenance cover.</span>")
+				user << "<span class='notice'>You close the maintenance cover.</span>"
 		else
 			if(cur_assembly)
-				to_chat(user, "<span class='warning'>You cannot open the cover while there is a fuel assembly inside.</span>")
+				user << "<span class='warning'>You cannot open the cover while there is a fuel assembly inside.</span>"
 			else
 				opened = 1
-				to_chat(user, "<span class='notice'>You open the maintenance cover.</span>")
+				user << "<span class='notice'>You open the maintenance cover.</span>"
 				icon_state = "port2"
 		return
 
-	else if (istype(W, /obj/item/stack/cable_coil) && opened && !(has_electronics & 2))
-		var/obj/item/stack/cable_coil/C = W
+	else if (istype(W, /obj/item/weapon/cable_coil) && opened && !(has_electronics & 2))
+		var/obj/item/weapon/cable_coil/C = W
 		if(C.amount < 10)
-			to_chat(user, "<span class='warning'>You need more wires.</span>")
+			user << "<span class='warning'>You need more wires.</span>"
 			return
-		to_chat(user, "You start adding cables to the frame...")
+		user << "You start adding cables to the frame..."
 		playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)
-		if(do_after(user, src, 20) && C.amount >= 10)
+		if(do_after(user, 20, target = src) && C.amount >= 10)
 			C.use(10)
 			user.visible_message(\
 				"<span class='warning'>[user.name] has added cables to the port frame!</span>",\
@@ -84,10 +99,11 @@
 		return
 
 	else if (iswirecutter(W) && opened && (has_electronics & 2))
-		to_chat(user, "You begin to cut the cables...")
+		user << "You begin to cut the cables..."
 		playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)
-		if(do_after(user, src, 50))
-			new /obj/item/stack/cable_coil(loc,10)
+		if(do_after(user, 50, target = src))
+			var/obj/item/weapon/cable_coil/C = new /obj/item/weapon/cable_coil(loc)
+			C.amount = 10
 			user.visible_message(\
 				"<span class='warning'>[user.name] cut the cabling inside the port.</span>",\
 				"You cut the cabling inside the port.")
@@ -95,24 +111,24 @@
 		return
 
 	else if (istype(W, /obj/item/weapon/module/rust_fuel_port) && opened && !(has_electronics & 1))
-		to_chat(user, "You try to insert the port control board into the frame...")
+		user << "You try to insert the port control board into the frame..."
 		playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)
-		if(do_after(user, src, 10))
+		if(do_after(user, 10, target = src))
 			has_electronics &= 1
-			to_chat(user, "You place the port control board inside the frame.")
+			user << "You place the port control board inside the frame."
 			del(W)
 		return
 
 	else if (istype(W, /obj/item/weapon/weldingtool) && opened && !has_electronics)
 		var/obj/item/weapon/weldingtool/WT = W
 		if (WT.get_fuel() < 3)
-			to_chat(user, "<span class='notice'>You need more welding fuel to complete this task.</span>")
+			user << "<span class='notice'>You need more welding fuel to complete this task.</span>"
 			return
-		to_chat(user, "You start welding the port frame...")
+		user << "You start welding the port frame..."
 		playsound(get_turf(src), 'sound/items/Welder.ogg', 50, 1)
-		if(do_after(user, src, 50))
+		if(do_after(user, 50, target = src))
 			if(!src || !WT.remove_fuel(3, user)) return
-			new /obj/item/mounted/frame/rust_fuel_assembly_port(loc)
+			new /obj/item/rust_fuel_assembly_port(loc)
 			user.visible_message(\
 				"<span class='warning'>[src] has been cut away from the wall by [user.name].</span>",\
 				"You detached the port frame.",\
@@ -121,3 +137,5 @@
 		return
 
 	..()
+
+#undef WORLD_ICON_SIZE
