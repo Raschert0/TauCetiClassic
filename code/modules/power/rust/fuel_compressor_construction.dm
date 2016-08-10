@@ -1,24 +1,39 @@
 
 //frame assembly
 
-/obj/item/mounted/frame/rust_fuel_compressor
+/obj/item/rust_fuel_compressor
 	name = "Fuel Compressor frame"
 	icon = 'code/modules/power/rust/rust.dmi'
 	icon_state = "fuel_compressor0"
-	w_class = W_CLASS_LARGE
-	mount_reqs = list("simfloor", "nospace")
-	flags = FPRINT
+	w_class = 4
+	flags = FPRINT | TABLEPASS
 	siemens_coefficient = 1
 
-/obj/item/mounted/frame/rust_fuel_compressor/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/item/rust_fuel_compressor/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if (iswrench(W))
 		new /obj/item/stack/sheet/plasteel( get_turf(src.loc), 12 )
 		del(src)
 		return
 	..()
 
-/obj/item/mounted/frame/rust_fuel_compressor/do_build(turf/on_wall, mob/user)
-	new /obj/machinery/rust_fuel_compressor(get_turf(user), get_dir(user, on_wall), 1)
+/obj/item/rust_fuel_compressor/proc/try_build(turf/on_wall)
+	if (get_dist(on_wall,usr)>1)
+		return
+	var/ndir = get_dir(usr,on_wall)
+	if (!(ndir in cardinal))
+		return
+	var/turf/loc = get_turf(usr)
+	var/area/A = loc.loc
+	if (!istype(loc, /turf/simulated/floor))
+		usr << "\red Fuel Compressor cannot be placed on this spot."
+		return
+	if (A.requires_power == 0 || istype(A, /area/space))
+		usr << "\red Fuel Compressor cannot be placed in this area."
+		return
+	for(var/obj/machinery/rust_fuel_compressor/T in loc)
+		usr << "\red There is another Fuel Compressor here."
+		return
+	new /obj/machinery/rust_fuel_compressor(loc, ndir, 1)
 	qdel(src)
 
 //construction steps
@@ -47,9 +62,9 @@
 		if(opened)
 			if(has_electronics & 1)
 				playsound(get_turf(src), 'sound/items/Crowbar.ogg', 50, 1)
-				to_chat(user, "You begin removing the circuitboard")//lpeters - fixed grammar issues
+				user << "You begin removing the circuitboard"
 
-				if(do_after(user, src, 50))
+				if(do_after(user, 50, target = src))
 					user.visible_message(\
 						"<span class='warning'>[user.name] has removed the circuitboard from [src.name]!</span>",\
 						"<span class='notice'>You remove the circuitboard board.</span>")
@@ -59,50 +74,49 @@
 			else
 				opened = 0
 				icon_state = "fuel_compressor0"
-				to_chat(user, "<span class='notice'>You close the maintenance cover.</span>")
+				user << "<span class='notice'>You close the maintenance cover.</span>"
 		else
 			if(compressed_matter > 0)
-				to_chat(user, "<span class='warning'>You cannot open the cover while there is compressed matter inside.</span>")
+				user << "<span class='warning'>You cannot open the cover while there is compressed matter inside.</span>"
 			else
 				opened = 1
-				to_chat(user, "<span class='notice'>You open the maintenance cover.</span>")
+				user << "<span class='notice'>You open the maintenance cover.</span>"
 				icon_state = "fuel_compressor1"
 		return
 
 	else if (istype(W, /obj/item/weapon/card/id)||istype(W, /obj/item/device/pda))			// trying to unlock the interface with an ID card
 		if(opened)
-			to_chat(user, "You must close the cover to swipe an ID card.")
+			user << "You must close the cover to swipe an ID card."
 		else
 			if(src.allowed(usr))
 				locked = !locked
-				to_chat(user, "You [ locked ? "lock" : "unlock"] the compressor interface.")
+				user << "You [ locked ? "lock" : "unlock"] the compressor interface."
 				update_icon()
 			else
-				to_chat(user, "<span class='warning'>Access denied.</span>")
+				user << "<span class='warning'>Access denied.</span>"
 		return
 
 	else if (istype(W, /obj/item/weapon/card/emag) && !emagged)		// trying to unlock with an emag card
 		if(opened)
-			to_chat(user, "You must close the cover to swipe an ID card.")
+			user << "You must close the cover to swipe an ID card."
 		else
 			flick("apc-spark", src)
-			if (do_after(user, src,6))
-				if(prob(50))
-					emagged = 1
-					locked = 0
-					to_chat(user, "You emag the port interface.")
-				else
-					to_chat(user, "You fail to [ locked ? "unlock" : "lock"] the compressor interface.")
+			if(prob(50))
+				emagged = 1
+				locked = 0
+				user << "You emag the port interface."
+			else
+				user << "You fail to [ locked ? "unlock" : "lock"] the compressor interface."
 		return
 
-	else if (istype(W, /obj/item/stack/cable_coil) && opened && !(has_electronics & 2))
-		var/obj/item/stack/cable_coil/C = W
+	else if (istype(W, /obj/item/weapon/cable_coil) && opened && !(has_electronics & 2))
+		var/obj/item/weapon/cable_coil/C = W
 		if(C.amount < 10)
-			to_chat(user, "<span class='warning'>You need more wires.</span>")
+			user << "<span class='warning'>You need more wires.</span>"
 			return
-		to_chat(user, "You start adding cables to the compressor frame...")
+		user << "You start adding cables to the compressor frame..."
 		playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)
-		if(do_after(user, src, 20) && C.amount >= 10)
+		if(do_after(user, 20, target = src) && C.amount >= 10)
 			C.use(10)
 			user.visible_message(\
 				"<span class='warning'>[user.name] has added cables to the compressor frame!</span>",\
@@ -111,10 +125,11 @@
 		return
 
 	else if (iswirecutter(W) && opened && (has_electronics & 2))
-		to_chat(user, "You begin to cut the cables...")
+		user << "You begin to cut the cables..."
 		playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)
-		if(do_after(user, src, 50))
-			new /obj/item/stack/cable_coil(loc,10)
+		if(do_after(user, 50, target = src))
+			var/obj/item/weapon/cable_coil/C = new /obj/item/weapon/cable_coil(loc)
+			C.amount = 10
 			user.visible_message(\
 				"<span class='warning'>[user.name] cuts the cabling inside the compressor.</span>",\
 				"You cut the cabling inside the port.")
@@ -122,24 +137,24 @@
 		return
 
 	else if (istype(W, /obj/item/weapon/module/rust_fuel_compressor) && opened && !(has_electronics & 1))
-		to_chat(user, "You try to insert the circuitboard into the frame...")
+		user << "You try to insert the circuitboard into the frame..."
 		playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)
-		if(do_after(user, src, 10))
+		if(do_after(user, 10, target = src))
 			has_electronics &= 1
-			to_chat(user, "You place the circuitboard inside the frame.")
+			user << "You place the circuitboard inside the frame."
 			qdel(W)
 		return
 
 	else if (istype(W, /obj/item/weapon/weldingtool) && opened && !has_electronics)
 		var/obj/item/weapon/weldingtool/WT = W
 		if (WT.get_fuel() < 3)
-			to_chat(user, "<span class='notice'>You need more welding fuel to complete this task.</span>")
+			user << "<span class='notice'>You need more welding fuel to complete this task.</span>"
 			return
-		to_chat(user, "You start welding the compressor frame...")
+		user << "You start welding the compressor frame..."
 		playsound(get_turf(src), 'sound/items/Welder.ogg', 50, 1)
 		if(do_after(user, src, 50))
 			if(!src || !WT.remove_fuel(3, user)) return
-			new /obj/item/mounted/frame/rust_fuel_assembly_port(loc)
+			new /obj/item/rust_fuel_compressor(loc)
 			user.visible_message(\
 				"<span class='warning'>[src] has been cut away from the wall by [user.name].</span>",\
 				"You detached the compressor frame.",\

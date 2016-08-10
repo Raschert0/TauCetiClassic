@@ -7,8 +7,7 @@ var/const/max_assembly_amount = 300
 	var/list/new_assembly_quantities = list("Deuterium" = 150,"Tritium" = 150,"Rodinium-6" = 0,"Stravium-7" = 0, "Pergium" = 0, "Dilithium" = 0)
 	var/compressed_matter = 0
 	anchored = 1
-	layer = BELOW_OBJ_LAYER
-
+	layer = 2.8
 	var/opened = 1 //0=closed, 1=opened
 	var/locked = 0
 	var/has_electronics = 0 // 0 - none, bit 1 - circuitboard, bit 2 - wires
@@ -18,8 +17,8 @@ var/const/max_assembly_amount = 300
 
 /obj/machinery/rust_fuel_compressor/attack_hand(mob/user)
 	add_fingerprint(user)
-	/*if(stat & (BROKEN|NOPOWER))
-		return*/
+	if(stat & (BROKEN|NOPOWER))
+		return
 	interact(user)
 
 /obj/machinery/rust_fuel_compressor/attackby(obj/item/weapon/W as obj, mob/user as mob)
@@ -37,8 +36,7 @@ var/const/max_assembly_amount = 300
 			return
 
 
-	var/t = {"<B>Reactor Fuel Rod Compressor / Assembler</B><BR>
-<A href='?src=\ref[src];close=1'>Close</A><BR>"}
+	var/t = {"<B>Reactor Fuel Rod Compressor / Assembler</B><BR>"}
 	if(locked)
 		t += "Swipe your ID to unlock this console."
 	else
@@ -71,9 +69,9 @@ var/const/max_assembly_amount = 300
 			compressed_matter -= 10
 			ejected = 1
 		if(ejected)
-			to_chat(usr, "<span class='notice'>[bicon(src)] [src] ejects some compressed matter units.</span>")
+			usr << "<span class='notice'>[src] ejects some compressed matter units.</span>"
 		else
-			to_chat(usr, "<span class='warning'>[bicon(src)] there are no more compressed matter units in [src].</span>")
+			usr << "<span class='warning'>There are no more compressed matter units in [src].</span>"
 
 	if( href_list["activate"] )
 //		to_chat(world, "<span class='notice'>New fuel rod assembly</span>")
@@ -81,7 +79,7 @@ var/const/max_assembly_amount = 300
 		var/fail = 0
 		var/old_matter = compressed_matter
 		for(var/reagent in new_assembly_quantities)
-			var/req_matter = round(new_assembly_quantities[reagent] / 30)
+			var/req_matter = min(round(new_assembly_quantities[reagent] / 30),1)
 //			to_chat(world, "[reagent] matter: [req_matter]/[compressed_matter]")
 			if(req_matter <= compressed_matter)
 				F.rod_quantities[reagent] = new_assembly_quantities[reagent]
@@ -97,9 +95,9 @@ var/const/max_assembly_amount = 300
 				break
 //			to_chat(world, "<span class='notice'>[reagent]: new_assembly_quantities[reagent]<br></span>")
 		if(fail)
-			del(F)
+			qdel(F)
 			compressed_matter = old_matter
-			to_chat(usr, "<span class='warning'>[bicon(src)] [src] flashes red: \'Out of matter.\'</span>")
+			usr << "<span class='warning'>[src] flashes red: \'Out of matter.\'</span>"
 		else
 			F.loc = src.loc//get_step(get_turf(src), src.dir)
 			F.percent_depleted = 0
@@ -114,7 +112,7 @@ var/const/max_assembly_amount = 300
 		avail_rods += new_assembly_quantities[cur_reagent]
 		avail_rods = max(avail_rods, 0)
 
-		var/new_amount = min(input("Enter new [cur_reagent] rod amount (max [avail_rods])", "Fuel Assembly Rod Composition ([cur_reagent])") as num, avail_rods)
+		var/new_amount = min(input(usr, "Enter new [cur_reagent] rod amount (max [avail_rods])", "Fuel Assembly Rod Composition ([cur_reagent])") as num, avail_rods)
 		new_assembly_quantities[cur_reagent] = new_amount
 
 	updateDialog()

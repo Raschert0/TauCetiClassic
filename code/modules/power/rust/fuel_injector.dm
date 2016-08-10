@@ -231,7 +231,7 @@
 
 	if( href_list["fuel_usage"] )
 		var/new_usage = text2num(input(usr, "Enter new fuel usage (0.01% - 100%)", "Modifying fuel usage", fuel_usage * 100))
-		new_usage = Clamp(0.01, new_usage, 100)
+		new_usage = Clamp(new_usage, 0.01, 100)
 		fuel_usage = new_usage / 100
 		active_power_usage = 500 + 1000 * fuel_usage
 

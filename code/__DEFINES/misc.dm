@@ -1,6 +1,9 @@
 //gets all subtypes of type
 #define subtypesof(typepath) ( typesof(typepath) - typepath )
 
+//icons size define
+#define WORLD_ICON_SIZE 32
+
 //singularity defines
 #define STAGE_ONE	1
 #define STAGE_TWO	3

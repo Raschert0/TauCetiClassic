@@ -1,4 +1,3 @@
-#define WORLD_ICON_SIZE 32
 //frame assembly
 
 /obj/item/rust_fuel_assembly_port
@@ -137,5 +136,3 @@
 		return
 
 	..()
-
-#undef WORLD_ICON_SIZE

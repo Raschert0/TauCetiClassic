@@ -4,7 +4,6 @@ Deuterium-deuterium fusion : 40 x 10^7 K
 Deuterium-tritium fusion: 4.5 x 10^7 K
 */
 
-#define WORLD_ICON_SIZE 32
 #define PIXEL_MULTIPLIER WORLD_ICON_SIZE/32
 #define MAGIC_COEF 1.2 //almost transfer circle area in meters to square area in metes
 #define MINIMUM_REACTANT_AMOUNT 0.00001
@@ -138,7 +137,7 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 				held_plasma.temperature = 1 + (mega_energy * 35000)/heat_capacity
 
 			//lose a random amount of plasma back into the air, increased by the field strength (want to switch this over to frequency eventually)
-			var/loss_ratio = Clamp(0,rand(0, 2.5 / field_strength), 0.75)
+			var/loss_ratio = Clamp(rand(0, 2.5 / field_strength), 0, 0.75)
 	//		to_chat(world, "lost [loss_ratio*100]% of held plasma")
 			//
 			var/datum/gas_mixture/plasma_lost = new
@@ -199,7 +198,7 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 /obj/effect/effect/rust_em_field/proc/AddEnergy(var/a_energy, var/a_mega_energy, var/a_frequency)
 	var/energy_loss_ratio = 0
 	if(a_frequency != src.frequency)
-		energy_loss_ratio = Clamp(0.2, 1 / abs(a_frequency - src.frequency), 1)
+		energy_loss_ratio = Clamp(1 / abs(a_frequency - src.frequency), 0.2, 1)
 	energy += a_energy * energy_loss_ratio
 	mega_energy += a_mega_energy * energy_loss_ratio
 
@@ -326,4 +325,3 @@ Deuterium-tritium fusion: 4.5 x 10^7 K
 #undef MINIMUM_REACTANT_AMOUNT
 #undef MAGIC_COEF
 #undef PIXEL_MULTIPLIER
-#undef WORLD_ICON_SIZE
