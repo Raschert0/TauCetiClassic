@@ -1,21 +1,3 @@
-var/global/list/holodeck_programs = list(
-	"emptycourt" = /area/holodeck/source_emptycourt,		\
-	"boxingcourt" =	/area/holodeck/source_boxingcourt,	\
-	"basketball" =	/area/holodeck/source_basketball,	\
-	"thunderdomecourt" =	/area/holodeck/source_thunderdomecourt,	\
-	"beach" =	/area/holodeck/source_beach,	\
-	"desert" =	/area/holodeck/source_desert,	\
-	"space" =	/area/holodeck/source_space,	\
-	"picnicarea" = /area/holodeck/source_picnicarea,	\
-	"snowfield" =	/area/holodeck/source_snowfield,	\
-	"theatre" =	/area/holodeck/source_theatre,	\
-	"meetinghall" =	/area/holodeck/source_meetinghall,	\
-	"courtroom" =	/area/holodeck/source_courtroom,	\
-	"burntest" = 	/area/holodeck/source_burntest,	\
-	"wildlifecarp" = 	/area/holodeck/source_wildlife,	\
-	"turnoff" = 	/area/holodeck/source_plating	\
-	)
-
 /obj/machinery/computer/HolodeckControl
 	name = "holodeck control console"
 	desc = "A computer used to control a nearby holodeck."
@@ -37,21 +19,8 @@ var/global/list/holodeck_programs = list(
 	var/last_gravity_change = 0
 	var/turf/simulated/spawn_point = null
 	var/datum/map_template/holoscene/current_scene = null
-	var/list/supported_programs = list( \
-	"Empty Court" = "emptycourt", \
-	"Basketball Court" = "basketball",	\
-	"Thunderdome Court" = "thunderdomecourt",	\
-	"Boxing Ring"="boxingcourt",	\
-	"Beach" = "beach",	\
-	"Desert" = "desert",	\
-	"Space" = "space",	\
-	"Picnic Area" = "picnicarea",	\
-	"Snow Field" = "snowfield",	\
-	"Theatre" = "theatre",	\
-	"Meeting Hall" = "meetinghall",	\
-	"Courtroom" = "courtroom"	\
-	)
-	var/list/restricted_programs = list("Atmospheric Burn Simulation" = "burntest", "Wildlife Simulation" = "wildlifecarp")
+	var/list/supported_programs = list()
+	var/list/restricted_programs = list()
 
 /obj/machinery/computer/HolodeckControl/attack_hand(var/mob/user as mob)
 	if(..())
@@ -62,6 +31,8 @@ var/global/list/holodeck_programs = list(
 	dat += "<B>Holodeck Control System</B><BR>"
 	dat += "<HR>Current Loaded Programs:<BR>"
 	for(var/prog in supported_programs)
+		if(prog == "Empty")
+			continue
 		dat += "<A href='?src=\ref[src];program=[supported_programs[prog]]'>([prog])</A><BR>"
 
 	dat += "<BR>"
@@ -171,7 +142,14 @@ var/global/list/holodeck_programs = list(
 	..()
 	linkedholodeck = locate(/area/holodeck/alphadeck)
 	if(holoscene_templates && holoscene_templates.len)
-		current_scene = holoscene_templates["emptycourt"]
+		current_scene = holoscene_templates["turnoff"]
+		for(var/datum/map_template/holoscene/HT in holoscene_templates)
+			if(!HT)
+				continue
+			if(!HT.restricted)
+				supported_programs[HT.name] = HT.id()
+			else
+				restricted_programs[HT.name] = HT.id()
 
 //This could all be done better, but it works for now.
 /obj/machinery/computer/HolodeckControl/Destroy()
@@ -260,12 +238,15 @@ var/global/list/holodeck_programs = list(
 
 	return 1
 
+/*
 //Why is it called toggle if it doesn't toggle?
 /obj/machinery/computer/HolodeckControl/proc/togglePower(var/toggleOn = 0)
 
 	if(toggleOn)
-		var/area/targetsource = locate(/area/holodeck/source_emptycourt)
-		holographic_objs = targetsource.copy_contents_to(linkedholodeck)
+		if(current_scene)
+			loadProgram()
+		else
+			loadIdProgram()
 
 		spawn(30)
 			for(var/obj/effect/landmark/L in linkedholodeck)
@@ -287,12 +268,12 @@ var/global/list/holodeck_programs = list(
 		if(!linkedholodeck.has_gravity)
 			linkedholodeck.gravitychange(1,linkedholodeck)
 
-		var/area/targetsource = locate(/area/holodeck/source_plating)
-		targetsource.copy_contents_to(linkedholodeck , 1)
+		loadIdProgram()
 		active = 0
 		use_power = 1
+		*/
 
-/obj/machinery/computer/HolodeckControl/proc/loadIdProgram(var/id = "emptycourt")
+/obj/machinery/computer/HolodeckControl/proc/loadIdProgram(var/id = "turnoff")
 	current_scene = holoscene_templates[id]
 	loadProgram()
 
@@ -333,7 +314,6 @@ var/global/list/holodeck_programs = list(
 	current_scene.set_air_change(spawn_point, env)
 	linkedholodeck = spawn_point.loc
 
-	//holographic_objs = A.copy_contents_to(linkedholodeck , 1)
 	for(var/obj/holo_obj in holographic_objs)
 		holo_obj.alpha *= 0.8 //give holodeck objs a slight transparency
 
@@ -389,8 +369,6 @@ var/global/list/holodeck_programs = list(
 	if(!linkedholodeck.has_gravity)
 		linkedholodeck.gravitychange(1,linkedholodeck)
 
-	var/area/targetsource = locate(/area/holodeck/source_plating)
-	targetsource.copy_contents_to(linkedholodeck , 1)
 	active = 0
 	use_power = 1
 	current_scene = null
