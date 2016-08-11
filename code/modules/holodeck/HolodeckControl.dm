@@ -27,18 +27,17 @@
 	"Beach" = "beach",	\
 	"Desert" = "desert",	\
 	"Space" = "space",	\
-	"Picnic Area" = "picnicarea",	\
 	"Snow Field" = "snowfield",	\
-	"Theatre" = "theatre",	\
+
 	"Meeting Hall" = "meetinghall",	\
 	"Courtroom" = "courtroom"	\
-	)
+	)//	"Picnic Area" = "picnicarea",	"Theatre" = "theatre",
 	var/list/restricted_programs = list("Atmospheric Burn Simulation" = "burntest", "Wildlife Simulation" = "wildlifecarp")
 
 /obj/machinery/computer/HolodeckControl/attack_hand(var/mob/user as mob)
 	if(..())
 		return
-		
+
 	user.set_machine(src)
 	var/dat
 
