@@ -35,6 +35,8 @@ var/global/list/holodeck_programs = list(
 	var/mob/last_to_emag = null
 	var/last_change = 0
 	var/last_gravity_change = 0
+	var/turf/simulated/spawn_point = null
+	var/datum/map_template/holoscene/current_scene = null
 	var/list/supported_programs = list( \
 	"Empty Court" = "emptycourt", \
 	"Basketball Court" = "basketball",	\
@@ -108,10 +110,8 @@ var/global/list/holodeck_programs = list(
 
 		if(href_list["program"])
 			var/prog = href_list["program"]
-			if(prog in holodeck_programs)
-				target = locate(holodeck_programs[prog])
-				if(target)
-					loadProgram(target)
+			if(holoscene_templates.Find(prog))
+				loadIdProgram(prog)
 
 		else if(href_list["AIoverride"])
 			if(!issilicon(usr))
@@ -170,6 +170,8 @@ var/global/list/holodeck_programs = list(
 /obj/machinery/computer/HolodeckControl/New()
 	..()
 	linkedholodeck = locate(/area/holodeck/alphadeck)
+	if(holoscene_templates && holoscene_templates.len)
+		current_scene = holoscene_templates["emptycourt"]
 
 //This could all be done better, but it works for now.
 /obj/machinery/computer/HolodeckControl/Destroy()
@@ -219,9 +221,7 @@ var/global/list/holodeck_programs = list(
 
 		if(!checkInteg(linkedholodeck))
 			damaged = 1
-			target = locate(/area/holodeck/source_plating)
-			if(target)
-				loadProgram(target)
+			loadIdProgram()
 			active = 0
 			use_power = 1
 			for(var/mob/M in range(10,src))
@@ -292,8 +292,11 @@ var/global/list/holodeck_programs = list(
 		active = 0
 		use_power = 1
 
+/obj/machinery/computer/HolodeckControl/proc/loadIdProgram(var/id = "emptycourt")
+	current_scene = holoscene_templates[id]
+	loadProgram()
 
-/obj/machinery/computer/HolodeckControl/proc/loadProgram(var/area/A)
+/obj/machinery/computer/HolodeckControl/proc/loadProgram()
 
 	if(world.time < (last_change + 25))
 		if(world.time < (last_change + 15))//To prevent super-spam clicking, reduced process size and annoyance -Sieve
@@ -317,7 +320,19 @@ var/global/list/holodeck_programs = list(
 	for(var/obj/effect/decal/cleanable/blood/B in linkedholodeck)
 		qdel(B)
 
-	holographic_objs = A.copy_contents_to(linkedholodeck , 1)
+	if(!spawn_point)
+		for(var/obj/effect/landmark/L in landmarks_list)
+			if(L.name=="Holodeck Base")
+				spawn_point = get_turf(L)
+				break
+
+	var/datum/gas_mixture/env = new
+	env.copy_from(spawn_point.air)
+	current_scene.load(spawn_point, FALSE)
+	holographic_objs = current_scene.get_all_and_air_change(spawn_point, env)
+	linkedholodeck = spawn_point.loc
+
+	//holographic_objs = A.copy_contents_to(linkedholodeck , 1)
 	for(var/obj/holo_obj in holographic_objs)
 		holo_obj.alpha *= 0.8 //give holodeck objs a slight transparency
 
@@ -368,9 +383,7 @@ var/global/list/holodeck_programs = list(
 		holographic_mobs -= C
 		C.derez()
 	//Turn it back to the regular non-holographic room
-	target = locate(/area/holodeck/source_plating)
-	if(target)
-		loadProgram(target)
+	loadIdProgram()
 
 	if(!linkedholodeck.has_gravity)
 		linkedholodeck.gravitychange(1,linkedholodeck)
@@ -379,3 +392,4 @@ var/global/list/holodeck_programs = list(
 	targetsource.copy_contents_to(linkedholodeck , 1)
 	active = 0
 	use_power = 1
+	current_scene = null

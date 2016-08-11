@@ -43,7 +43,7 @@
 /obj/structure/table/holotable
 	name = "table"
 	desc = "A square piece of metal standing on four metal legs. It can not move."
-	icon = 'icons/obj/structures.dmi'
+	icon = 'icons/obj/tables.dmi'
 	icon_state = "table"
 	density = 1
 	anchored = 1.0
@@ -67,7 +67,7 @@
 /obj/structure/table/woodentable/holotable
 	name = "table"
 	desc = "A square piece of wood standing on four wooden legs. It can not move."
-	icon = 'icons/obj/structures.dmi'
+	icon = 'icons/obj/tables.dmi'
 	icon_state = "woodtable"
 
 /obj/structure/holostool
@@ -373,17 +373,16 @@ obj/structure/stool/bed/chair/holochair
 		M << "FIGHT!"
 
 //Holorack
-
-/obj/structure/table/rack/holorack
+/obj/structure/rack/holorack
 	name = "rack"
 	desc = "Different from the Middle Ages version."
 	icon = 'icons/obj/objects.dmi'
 	icon_state = "rack"
 
-/obj/structure/table/rack/holorack/attack_hand(mob/user as mob)
+/obj/structure/rack/holorack/attack_hand(mob/user as mob)
 	return
 
-/obj/structure/table/rack/holorack/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/structure/rack/holorack/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if (istype(W, /obj/item/weapon/wrench))
 		user << "It's a holorack!  You can't unwrench it!"
 		return

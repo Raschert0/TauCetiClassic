@@ -89,6 +89,7 @@
 		map_templates[T.name] = T
 
 	preloadShelterTemplates()
+	preloadHolodeckTemplates()
 	//preloadRuinTemplates()		//This all can be usefull, but not now
 	//preloadShuttleTemplates()
 
@@ -129,6 +130,16 @@
 		shuttle_templates[S.shuttle_id] = S
 		map_templates[S.shuttle_id] = S
 */
+
+/proc/preloadHolodeckTemplates()
+	for(var/item in subtypesof(/datum/map_template/holoscene))
+		var/datum/map_template/holoscene/holoscene_type = item
+		if(!(initial(holoscene_type.mappath)))
+			continue
+		var/datum/map_template/holoscene/S = new holoscene_type()
+		holoscene_templates[S.id()] = S
+		map_templates[S.id()] = S
+
 
 /proc/preloadShelterTemplates()
 	for(var/item in subtypesof(/datum/map_template/shelter))
