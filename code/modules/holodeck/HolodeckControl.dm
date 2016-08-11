@@ -19,16 +19,26 @@
 	var/last_gravity_change = 0
 	var/turf/simulated/spawn_point = null
 	var/datum/map_template/holoscene/current_scene = null
-	var/list/supported_programs = list()
-	var/list/restricted_programs = list()
+	var/list/supported_programs = list( \
+	"Empty Court" = "emptycourt", \
+	"Basketball Court" = "basketball",	\
+	"Thunderdome Court" = "thunderdomecourt",	\
+	"Boxing Ring"="boxingcourt",	\
+	"Beach" = "beach",	\
+	"Desert" = "desert",	\
+	"Space" = "space",	\
+	"Picnic Area" = "picnicarea",	\
+	"Snow Field" = "snowfield",	\
+	"Theatre" = "theatre",	\
+	"Meeting Hall" = "meetinghall",	\
+	"Courtroom" = "courtroom"	\
+	)
+	var/list/restricted_programs = list("Atmospheric Burn Simulation" = "burntest", "Wildlife Simulation" = "wildlifecarp")
 
 /obj/machinery/computer/HolodeckControl/attack_hand(var/mob/user as mob)
 	if(..())
 		return
-
-	if(!supported_programs.len)
-		initialize()
-
+		
 	user.set_machine(src)
 	var/dat
 
@@ -145,15 +155,6 @@
 /obj/machinery/computer/HolodeckControl/New()
 	..()
 	linkedholodeck = locate(/area/holodeck/alphadeck)
-
-/obj/machinery/computer/HolodeckControl/initialize()
-	if(holoscene_templates && holoscene_templates.len)
-		current_scene = holoscene_templates["turnoff"]
-		for(var/datum/map_template/holoscene/HT in holoscene_templates)
-			if(!HT.restricted)
-				supported_programs[HT.name] = HT.holoscene_id
-			else
-				restricted_programs[HT.name] = HT.holoscene_id
 
 //This could all be done better, but it works for now.
 /obj/machinery/computer/HolodeckControl/Destroy()
