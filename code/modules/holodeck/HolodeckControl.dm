@@ -326,10 +326,11 @@ var/global/list/holodeck_programs = list(
 				spawn_point = get_turf(L)
 				break
 
-	var/datum/gas_mixture/env = new
-	env.copy_from(spawn_point.air)
-	current_scene.load(spawn_point, FALSE)
-	holographic_objs = current_scene.get_all_and_air_change(spawn_point, env)
+	var/datum/gas_mixture/cenv = spawn_point.return_air()
+	var/datum/gas_mixture/env = new()
+	env.copy_from(cenv)
+	holographic_objs = current_scene.load(spawn_point, FALSE)
+	current_scene.set_air_change(spawn_point, env)
 	linkedholodeck = spawn_point.loc
 
 	//holographic_objs = A.copy_contents_to(linkedholodeck , 1)

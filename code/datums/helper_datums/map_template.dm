@@ -5,6 +5,7 @@
 	var/mappath = null
 	var/mapfile = null
 	var/loaded = 0 // Times loaded this round
+	var/list/loaded_objs = list()
 
 /datum/map_template/New(path = null, map = null, rename = null)
 	if(path)
@@ -17,7 +18,7 @@
 		name = rename
 
 /datum/map_template/proc/preload_size(path)
-	var/bounds = maploader.load_map(file(path), 1, 1, 1, cropMap=FALSE, measureOnly=TRUE)
+	var/list/bounds = maploader.load_map(file(path), 1, 1, 1, cropMap=FALSE, measureOnly=TRUE)
 	if(bounds)
 		width = bounds[MAP_MAXX] // Assumes all templates are rectangular, have a single Z level, and begin at 1,1,1
 		height = bounds[MAP_MAXY]
@@ -54,9 +55,14 @@
 	if(T.y+height > world.maxy)
 		return
 
-	var/list/bounds = maploader.load_map(get_file(), T.x, T.y, T.z, cropMap=TRUE)
+	loaded_objs = maploader.load_map(get_file(), T.x, T.y, T.z, cropMap=TRUE)
+	if(!loaded_objs.len)
+		return 0
+	var/list/bounds = loaded_objs[loaded_objs.len]
 	if(!bounds)
 		return 0
+	return loaded_objs.Copy(1,loaded_objs.len)
+	loaded_objs.Cut()
 
 	//initialize things that are normally initialized after map load
 	initTemplateBounds(bounds)

@@ -13,40 +13,17 @@
 	else
 		return null
 
-/datum/map_template/holoscene/proc/get_all_and_air_change(var/turf/simulated/T, var/datum/gas_mixture/env)
-
-	var/list/all = list()
+/datum/map_template/holoscene/proc/set_air_change(var/turf/simulated/T, var/datum/gas_mixture/env)
 	var/i
 	var/j
-	var/turf/simulated/TT
-	for(i = 0, i < HOLO_SIZE_X, i++)
-		for(j = 0, j < HOLO_SIZE_Y, j++)
-			TT = locate(T.x + i, T.y + j, T.z)
-			for(var/obj/O in TT)
-				if(!istype(O,/obj))
-					continue
-				all += O
-			for(var/mob/M in TT)
-				if(!istype(M,/mob) || istype(M, /mob/aiEye) || istype(M, /mob/camera))
-					continue
-				all += M
-
-	TT = locate(T.x, T.y, T.z)
+	var/turf/simulated/TT = locate(T.x, T.y, T.z)
 	if(!special_atmo)
-		if(!TT.zone)
-			world << "[TT] - Cannot find zone"
-		else
-			var/zone/czone = TT.zone
-			var/datum/gas_mixture/inv = czone.air
-			inv.total_moles = env.total_moles
-			inv.oxygen = env.oxygen
-			inv.carbon_dioxide = env.carbon_dioxide
-			inv.nitrogen = env.nitrogen
-			inv.phoron = env.phoron
-			inv.temperature = env.temperature
-			if(env.trace_gases.len)
-				inv.trace_gases = env.trace_gases
-	return all
+		for(i = 0, i < HOLO_SIZE_X, i++)
+			for(j = 0, j < HOLO_SIZE_Y, j++)
+				TT = locate(T.x + i, T.y + j, T.z)
+				var/datum/gas_mixture/mixt = TT.return_air()
+				if(mixt)
+					mixt.copy_from(env)
 
 /datum/map_template/holoscene/emptycourt
 	name = "Empty Court"
