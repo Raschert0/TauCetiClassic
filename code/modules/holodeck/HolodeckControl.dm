@@ -143,13 +143,12 @@
 	linkedholodeck = locate(/area/holodeck/alphadeck)
 	if(holoscene_templates && holoscene_templates.len)
 		current_scene = holoscene_templates["turnoff"]
-		for(var/datum/map_template/holoscene/HT in holoscene_templates)
-			if(!HT)
-				continue
-			if(!HT.restricted)
-				supported_programs[HT.name] = HT.id()
-			else
-				restricted_programs[HT.name] = HT.id()
+		spawn(10)
+			for(var/datum/map_template/holoscene/HT in holoscene_templates)
+				if(!HT.restricted)
+					supported_programs[HT.name] = HT.holoscene_id
+				else
+					restricted_programs[HT.name] = HT.holoscene_id
 
 //This could all be done better, but it works for now.
 /obj/machinery/computer/HolodeckControl/Destroy()
