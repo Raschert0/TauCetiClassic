@@ -18,6 +18,13 @@
 					var/turf/simulated/floor/FF = get_step(src,direction)
 					FF.update_icon() //so siding get updated properly
 
+turf/simulated/floor/holofloor/update_icon()
+	if(is_plasteel_floor() && !istype(src, /turf/simulated/floor/holofloor/))
+		return
+	else
+		..()
+		return
+
 /turf/simulated/floor/holofloor/space
 	icon = 'icons/turf/space.dmi'
 	name = "\proper space"

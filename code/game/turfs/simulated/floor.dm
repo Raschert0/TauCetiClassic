@@ -65,7 +65,7 @@ var/list/wood_icons = list("wood","wood-broken")
 
 /turf/simulated/floor/New()
 	..()
-	if(icon_state in icons_to_ignore_at_floor_init && !istype(src, /turf/simulated/floor/holofloor/)) //so damaged/burned tiles or plating icons aren't saved as the default
+	if(icon_state in icons_to_ignore_at_floor_init) //so damaged/burned tiles or plating icons aren't saved as the default
 		icon_regular_floor = "floor"
 	else
 		icon_regular_floor = icon_state
