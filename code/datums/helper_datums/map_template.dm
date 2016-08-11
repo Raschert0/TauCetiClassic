@@ -5,7 +5,7 @@
 	var/mappath = null
 	var/mapfile = null
 	var/loaded = 0 // Times loaded this round
-	var/list/loaded_objs = list()
+	var/list/loaded_stuff = list()
 
 /datum/map_template/New(path = null, map = null, rename = null)
 	if(path)
@@ -18,11 +18,18 @@
 		name = rename
 
 /datum/map_template/proc/preload_size(path)
-	var/list/bounds = maploader.load_map(file(path), 1, 1, 1, cropMap=FALSE, measureOnly=TRUE)
-	if(bounds)
-		width = bounds[MAP_MAXX] // Assumes all templates are rectangular, have a single Z level, and begin at 1,1,1
-		height = bounds[MAP_MAXY]
-	return bounds
+	loaded_stuff = maploader.load_map(file(path), 1, 1, 1, cropMap=FALSE, measureOnly=TRUE)
+	if(loaded_stuff && loaded_stuff.len)
+		var/list/bounds = loaded_stuff["bounds"]
+		if(bounds && bounds.len)
+			width = bounds[MAP_MAXX] // Assumes all templates are rectangular, have a single Z level, and begin at 1,1,1
+			height = bounds[MAP_MAXY]
+			. = bounds
+			loaded_stuff.Cut()
+		else
+			. = null
+	else
+		. = null
 
 /proc/initTemplateBounds(var/list/bounds)
 	var/list/obj/machinery/atmospherics/atmos_machines = list()
@@ -55,20 +62,21 @@
 	if(T.y+height > world.maxy)
 		return
 
-	loaded_objs = maploader.load_map(get_file(), T.x, T.y, T.z, cropMap=TRUE)
-	if(!loaded_objs.len)
+	loaded_stuff = maploader.load_map(get_file(), T.x, T.y, T.z, cropMap=TRUE)
+	if(!loaded_stuff || !loaded_stuff.len)
 		return 0
-	var/list/bounds = loaded_objs[loaded_objs.len]
-	if(!bounds)
-		return 0
-	return loaded_objs.Copy(1,loaded_objs.len)
-	loaded_objs.Cut()
 
+	var/list/bounds = loaded_stuff["bounds"]
+	if(!bounds || !bounds.len)
+		return 0
+
+	var/list/stuff = loaded_stuff["stuff"]
+	. = stuff
 	//initialize things that are normally initialized after map load
 	initTemplateBounds(bounds)
 
 	log_game("[name] loaded at at [T.x],[T.y],[T.z]")
-	return 1
+	loaded_stuff.Cut()
 
 /datum/map_template/proc/get_file()
 	if(mapfile)

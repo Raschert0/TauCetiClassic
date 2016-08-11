@@ -40,7 +40,7 @@ var/global/dmm_suite/preloader/_preloader = new
 	var/list/bounds = list(1.#INF, 1.#INF, 1.#INF, -1.#INF, -1.#INF, -1.#INF)
 	var/list/grid_models = list()
 	var/key_len = 0
-	var/list/loaded_stuff = list()
+	var/list/loaded_stuff = list("stuff" = list(), "bounds" = list())
 
 	dmmRegex.next = 1
 	while(dmmRegex.Find(tfile, dmmRegex.next))
@@ -121,7 +121,7 @@ var/global/dmm_suite/preloader/_preloader = new
 								var/model_key = copytext(line, tpos, tpos + key_len)
 								if(!grid_models[model_key])
 									return null
-								loaded_stuff += parse_grid(grid_models[model_key], xcrd, ycrd, zcrd)
+								loaded_stuff["stuff"] += parse_grid(grid_models[model_key], xcrd, ycrd, zcrd)
 								CHECK_TICK
 
 							maxx = max(maxx, xcrd)
@@ -135,7 +135,7 @@ var/global/dmm_suite/preloader/_preloader = new
 	if(bounds[1] == 1.#INF) // Shouldn't need to check every item
 		return null
 	else
-		loaded_stuff += bounds
+		loaded_stuff["bounds"] += bounds
 		return loaded_stuff
 
 /**
