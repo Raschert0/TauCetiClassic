@@ -25,6 +25,10 @@
 /obj/machinery/computer/HolodeckControl/attack_hand(var/mob/user as mob)
 	if(..())
 		return
+
+	if(!supported_programs.len)
+		initialize()
+
 	user.set_machine(src)
 	var/dat
 
@@ -141,14 +145,15 @@
 /obj/machinery/computer/HolodeckControl/New()
 	..()
 	linkedholodeck = locate(/area/holodeck/alphadeck)
+
+/obj/machinery/computer/HolodeckControl/initialize()
 	if(holoscene_templates && holoscene_templates.len)
 		current_scene = holoscene_templates["turnoff"]
-		spawn(10)
-			for(var/datum/map_template/holoscene/HT in holoscene_templates)
-				if(!HT.restricted)
-					supported_programs[HT.name] = HT.holoscene_id
-				else
-					restricted_programs[HT.name] = HT.holoscene_id
+		for(var/datum/map_template/holoscene/HT in holoscene_templates)
+			if(!HT.restricted)
+				supported_programs[HT.name] = HT.holoscene_id
+			else
+				restricted_programs[HT.name] = HT.holoscene_id
 
 //This could all be done better, but it works for now.
 /obj/machinery/computer/HolodeckControl/Destroy()
