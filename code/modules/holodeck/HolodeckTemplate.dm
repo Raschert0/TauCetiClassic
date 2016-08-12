@@ -15,12 +15,10 @@
 		return null
 
 /datum/map_template/holoscene/proc/set_air_change(var/turf/simulated/T, var/datum/gas_mixture/env)
-	var/i
-	var/j
-	var/turf/simulated/TT = locate(T.x, T.y, T.z)
+	var/turf/simulated/TT
 	if(!special_atmo)
-		for(i = 0, i < HOLO_SIZE_X, i++)
-			for(j = 0, j < HOLO_SIZE_Y, j++)
+		for(var/i = 0 to HOLO_SIZE_X - 1)
+			for(var/j = 0 to HOLO_SIZE_Y - 1)
 				TT = locate(T.x + i, T.y + j, T.z)
 				var/datum/gas_mixture/mixt = TT.return_air()
 				if(mixt)
