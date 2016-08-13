@@ -4,10 +4,6 @@
 #define MINE_DOCK /area/shuttle/mining/outpost
 #define SCI_DOCK /area/shuttle/research/outpost
 
-#define MINE_SCI_CONSOLE_STATION "station"
-#define MINE_SCI_CONSOLE_MINE "mine"
-#define MINE_SCI_CONSOLE_SCI "sci"
-
 var/obj/machinery/computer/mine_sci_shuttle/flight_comp/autopilot
 
 /obj/machinery/computer/mine_sci_shuttle
@@ -31,9 +27,9 @@ var/obj/machinery/computer/mine_sci_shuttle/flight_comp/autopilot
 	if(autopilot)
 		dat = {"Location: [autopilot.mine_sci_curr_location]<br>
 		Ready to move[max(autopilot.lastMove + MINE_SCI_SHUTTLE_COOLDOWN - world.time, 0) ? " in [max(round((autopilot.lastMove + MINE_SCI_SHUTTLE_COOLDOWN - world.time) * 0.1), 0)] seconds" : ": now"]<br>
-		<a href='?src=\ref[src];[MINE_SCI_CONSOLE_MINE]=1'>Mining Station</a> |
-		<a href='?src=\ref[src];[MINE_SCI_CONSOLE_SCI]=1'>Research Outpost</a> |
-		<a href='?src=\ref[src];[MINE_SCI_CONSOLE_STATION]=1'>NSS Exodus</a><br>
+		<a href='?src=\ref[src];"mine"=1'>Mining Station</a> |
+		<a href='?src=\ref[src];"station"=1'>Research Outpost</a> |
+		<a href='?src=\ref[src];"sci"=1'>NSS Exodus</a><br>
 		<a href='?src=\ref[user];mach_close=flightcomputer'>Close</a>"}
 	else
 		dat = "Cannot find shuttle"
@@ -60,11 +56,11 @@ var/obj/machinery/computer/mine_sci_shuttle/flight_comp/autopilot
 		return
 
 	var/result = FALSE
-	if(href_list[MINE_SCI_CONSOLE_MINE])
+	if(href_list["mine])
 		result = autopilot.mine_sci_move_to(MINE_DOCK)
-	else if(href_list[MINE_SCI_CONSOLE_SCI])
+	else if(href_list["sci"])
 		result = autopilot.mine_sci_move_to(SCI_DOCK)
-	else if(href_list[MINE_SCI_CONSOLE_STATION])
+	else if(href_list["station"])
 		result = autopilot.mine_sci_move_to(STATION_DOCK)
 	if(result)
 		usr << "\blue Shuttle recieved message and will be sent shortly."
@@ -148,7 +144,3 @@ var/obj/machinery/computer/mine_sci_shuttle/flight_comp/autopilot
 #undef STATION_DOCK
 #undef MINE_DOCK
 #undef SCI_DOCK
-
-#undef MINE_SCI_CONSOLE_STATION
-#undef MINE_SCI_CONSOLE_MINE
-#undef MINE_SCI_CONSOLE_SCI
