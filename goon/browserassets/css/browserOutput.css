@@ -296,24 +296,17 @@ h1.alert, h2.alert		{color: #000000;}
 .confirm				{color: #00af3b;}
 .rose					{color: #ff5050;}
 .sans					{font-family: 'Comic Sans MS', cursive, sans-serif;}
-.ancient				{color: #008B8B;	font-stye: italic;}
 .newscaster				{color: #800000;}
 .mod					{color: #735638;	font-weight: bold;}
 .modooc					{color: #184880;	font-weight: bold;}
 .adminmod				{color: #402A14;	font-weight: bold;}
 .tajaran				{color: #803B56;}
 .skrell					{color: #00CED1;}
-.solcom					{color: #22228B;}
 .soghun					{color: #228B22;}
 .changeling				{color: #800080;}
 .vox					{color: #AA00AA;}
-.trinary				{color: #727272;}
-.kidan					{color: #664205;}
 .slime					{color: #0077AA;}
-.drask					{color: #a3d4eb; font-family: "Arial Black";}
-.clown					{color: #ff0000;}
 .shadowling				{color: #3b2769;}
-.vulpkanin				{color: #B97A57;}
 .abductor				{color: #800080;}
 .rough					{font-family: 'Trebuchet MS', cursive, sans-serif;}
 .say_quote				{font-family: Georgia, Verdana, sans-serif;}
@@ -327,8 +320,6 @@ h1.alert, h2.alert		{color: #000000;}
 .bold					{font-weight: bold;}
 .center					{text-align: center;}
 .red					{color: #FF0000;}
-.grey					{font-family: "Wingdings", cursive, sans-serif;}
-.skeleton				{color: #585858; font-weight: bold; font-style: italic;}
 .gutter					{color: #7092BE; font-family: "Trebuchet MS", cursive, sans-serif;}
 .orange					{color: #ffa500;}
 .orangei				{color: #ffa500; font-style: italic;}
